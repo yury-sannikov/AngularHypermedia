@@ -1,0 +1,32 @@
+{
+  "name": "angular-hypermedia",
+  "version": "0.0.1",
+  "devDependencies": {
+    "angular-mocks": "1.2.13",
+    "sinon": "1.9.0",
+    "angular-resource": "1.2.13"
+  },
+  "dependencies": {
+    "angular": "1.2.13",
+    "lodash": "2.4.1"
+  },
+  "authors": [
+    "Yuriy Sannikov <yury.sannikov@gmail.com>"
+  ],
+  "description": "An AngularJS module for using NHateoas library. Provides POJOs and hides hypermedia complexity",
+  "keywords": [
+    "angular",
+    "resource",
+    "hateoas",
+    "rest",
+    "api"
+  ],
+  "license": "MIT",
+  "homepage": "http://github.nreca.org/yxs0/angular-hypermedia",
+  "main": "src/angular-hypermedia.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower"
+  ]
+}

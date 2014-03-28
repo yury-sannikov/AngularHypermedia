@@ -1,0 +1,38 @@
+{
+  "author": "Yury Sannikov",
+  "name": "AngularHypermedia",
+  "version": "0.0.1",
+  "homepage": "http://github.nreca.org/yxs0/angular-hypermedia",
+  "description": "",
+  "bugs": "http://github.nreca.org/yxs0/angular-hypermedia/issues",
+  "scripts": {
+    "prepublish": "bower install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.nreca.org/yxs0/angular-hypermedia.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "0.4.2",
+    "grunt-cli": "0.1.6",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.4",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-uglify": "~0.2.4",
+    "grunt-karma": "0.7.1",
+    "karma-teamcity-reporter": "0.1.0",
+    "grunt-ngmin": "0.0.3",
+    "grunt-html2js": "~0.1.7",
+    "grunt-s3": "0.2.0-alpha.3",
+    "protractor": "0.18.0",
+    "grunt-protractor-runner": "latest",
+    "grunt-contrib-jade": "~0.8.0",
+    "karma-coffee-preprocessor": "0.1.3",
+    "karma": "0.10.0",
+    "grunt-contrib-less": "~0.8.3",
+    "sinon": "~1.8.2"
+  }
+}
