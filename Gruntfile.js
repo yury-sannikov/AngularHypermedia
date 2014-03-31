@@ -13,7 +13,7 @@ module.exports = function (grunt) {
 		pkg: grunt.file.readJSON("package.json"),
 		uglify: {
 			options: {
-				banner: "/*!\n * <%= pkg.name %> <%= pkg.version %>-<%= grunt.template.today('yyyymmdd') %>\n * Copyright 2013 Jeremy Marquis (@_jmarquis)\n * http://github.com/jmarquis/angular-hateoas\n */\n"
+				banner: "/*!\n * <%= pkg.name %> <%= pkg.version %>-<%= grunt.template.today('yyyymmdd') %>\n * http://github.nreca.org/yxs0/angular-hypermedia\n */\n"
 			},
 			build: {
 				src: "src/<%= pkg.name %>.js",
