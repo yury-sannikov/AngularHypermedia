@@ -1,0 +1,16 @@
+// This file is a WADL (http://www.w3.org/Submission/wadl/#x3-10001) JSON representation using Siren metatada format
+// Ihis is static file bul also it can be implemented as RUN (http://amundsen.com/blog/archives/1067)
+[
+{
+	"links":[{
+		"rel":[						// Link relations
+			"ver:0.0.1",			// Version
+			"latest-version",		// API current version mark (http://tools.ietf.org/html/rfc5829#section-3.2)
+			"benefits/mybenefits",	// API name
+		],
+		"url" : "http://localhost:55556/api/benefits/mybenefits"
+	}
+	]
+
+}
+]

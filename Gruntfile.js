@@ -1,5 +1,14 @@
 module.exports = function (grunt) {
 
+	grunt.loadNpmTasks('grunt-contrib-clean');
+	grunt.loadNpmTasks('grunt-contrib-copy');
+	grunt.loadNpmTasks('grunt-contrib-jshint');
+	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-contrib-watch');
+	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-karma');
+	grunt.loadNpmTasks('grunt-ngmin');
+
 	grunt.initConfig({
 		pkg: grunt.file.readJSON("package.json"),
 		uglify: {
@@ -22,13 +31,12 @@ module.exports = function (grunt) {
 		}
 	});
 
-	grunt.loadNpmTasks("grunt-contrib-uglify");
-	grunt.loadNpmTasks("grunt-karma");
-
 	grunt.registerTask("default", ["karma:continuous", "uglify"]);
 
 	grunt.registerTask("startTestServer", ["karma:unit:start"]);
 	grunt.registerTask("runTests", ["karma:unit:run"]);
 	grunt.registerTask("test", ["karma:continuous"]);
+  	grunt.registerTask('build', ['clean', 'jshint',
+    	'copy:build_appjs', 'copy:build_unitjs', 'copy:build_vendorjs']);
 
 };
