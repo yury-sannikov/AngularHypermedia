@@ -2,10 +2,31 @@
 
 
 angular.module("angularHypermedia", [])
-.provider("hypermediaProvider", ["$q", function ($q) {
+.provider("Hypermedia", function () {	
 	
-	return {
-
+	var config = {
+		apiRoot: null,
+		currentVersion: null
 	};
 
-}]);
+	return {
+		setUp: function(newConfig)
+		{
+			angular.extend(config, newConfig);
+		},
+
+		getConfig: function()
+		{
+			return config;
+		},
+
+		$get: ["$injector", function($injector)
+		{
+			return {
+
+
+			};
+		}]
+	};
+
+});
