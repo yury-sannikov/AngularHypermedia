@@ -94,22 +94,35 @@ describe("Siren provider", function () {
 		expect(result.status).toBe('pending');
 	});
 
-    it('CreateEntities', function () {
+    it('CreateEntities', inject(function ($rootScope) {
 		var helperThisNoVer = {data: sirenPayload, proto: null};
 		var result = {};
-		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, angular.identity, "0.0.1");
+		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, siren, "0.0.1");
 		
 		// Entities are always properties. First access triggers data request
 		expect("orderItems" in result).toBe(true);
 		expect("items" in result).toBe(true);
 
 		//Check that access to property invokes http request and return promise
-		$httpBackend.when('GET','http://localhost:55556/api/benefits/myorders').respond({});
+		$httpBackend.when('GET','http://localhost:55556/api/benefits/myorders').respond({
+				"properties": { 
+					"parentOrderId": 54
+				}			
+		});
 
 		expect(typeof result.orderItems.then).toBe("function");
 
+		// Check that order items has good props
+		var orderData;
+		result.orderItems.then(function(data) {
+			orderData = data;
+		});
+		
+		$rootScope.$apply();
 		$httpBackend.flush();
-	});
+
+		expect(orderData.parentOrderId).toBe(54);
+	}));
 
 });
 
