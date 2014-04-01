@@ -43,7 +43,7 @@ describe("Siren provider", function () {
 							]
 						};
 		
-		helperThis = {data: apiRootData, proto: "0.0.1"};
+		helperThis = apiRootData;
 		
 		sirenResponse =   
 			{
@@ -80,10 +80,10 @@ describe("Siren provider", function () {
     it('GetLinkUrlByRelVersion', function () {
     	expect(typeof sirenProvider.GetLinkUrlByRelVersion).toBe("function");
 
-    	var result = sirenProvider.GetLinkUrlByRelVersion.call(helperThis, "benefits/mybenefits");
+    	var result = sirenProvider.GetLinkUrlByRelVersion.call(helperThis, "benefits/mybenefits", "0.0.1");
     	expect(result).toBe("http://localhost:55556/api/benefits/mybenefits");
 
-		var helperThisNoVer = {data: apiRootData, proto: null};
+		var helperThisNoVer = apiRootData;
 
     	result = sirenProvider.GetLinkUrlByRelVersion.call(helperThisNoVer, "benefits/mybenefits");
     	expect(result).toBe("http://localhost:55556/api/2/benefits/mybenefits");
@@ -96,18 +96,16 @@ describe("Siren provider", function () {
 	});
     
     it('CreateProperties', function () {
-		var helperThisNoVer = {data: sirenResponse, proto: null};
 		var result = {};
-		sirenProvider.CreateProperties.call(helperThisNoVer, result);
+		sirenProvider.CreateProperties.call(sirenResponse, result);
 		expect(result.orderNumber).toBe(42);
 		expect(result.itemCount).toBe(3);
 		expect(result.status).toBe('pending');
 	});
 
     it('CreateEntities from requested data', inject(function ($rootScope) {
-		var helperThisNoVer = {data: sirenResponse, proto: null};
 		var result = {};
-		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, siren, "0.0.1");
+		sirenProvider.CreateEntities.call(sirenResponse, result, $injector, siren, "0.0.1");
 		
 		// Entities are always properties. First access triggers data request
 		expect("orderItems" in result).toBe(true);
@@ -135,9 +133,8 @@ describe("Siren provider", function () {
 	}));
     
     it('CreateEntities from embedded data', inject(function ($rootScope) {
-		var helperThisNoVer = {data: sirenResponse, proto: null};
 		var result = {};
-		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, siren, "0.0.1");
+		sirenProvider.CreateEntities.call(sirenResponse, result, $injector, siren);
 		
 		// Entities are always properties. First access triggers data request
 		expect("orderItems" in result).toBe(true);

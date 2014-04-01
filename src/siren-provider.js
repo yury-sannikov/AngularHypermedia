@@ -7,10 +7,9 @@ angular.module("angularHypermedia")
 		
 		GetLinkUrlByRelVersion:function(relName, version)
 		{
-			version = version || this.proto;
 			version = version ? ("ver:" + version) : "latest-version";
 			
-			var link = _.find(this.data.links, function(link) {
+			var link = _.find(this.links, function(link) {
 				return (-1 != _.indexOf(link.rel, relName)) && (-1 != _.indexOf(link.rel, version));
 			});
 			
@@ -19,16 +18,16 @@ angular.module("angularHypermedia")
 
 		CreateProperties: function(resultObject)
 		{
-			if (!this.data.properties)
+			if (!this.properties)
 				return;
-			angular.forEach(this.data.properties, function(value, key){
+			angular.forEach(this.properties, function(value, key){
 				resultObject[key] = value;
 			});
 		},
 
-		CreateEntities: function(resultObject, $injector, transformerFunction, protocolVersion)
+		CreateEntities: function(resultObject, $injector, transformerFunction)
 		{
-			if (!this.data.entities)
+			if (!this.entities)
 				return;
 			var q = $injector.get("$q"), http = $injector.get("$http");
 
@@ -38,13 +37,13 @@ angular.module("angularHypermedia")
 				if (entity.properties)
 				{
 					// This is full entity so resolve it now
-					defer.resolve(transformerFunction(entity, protocolVersion));
+					defer.resolve(transformerFunction(entity));
 					return defer.promise;
 				}
 
 				http({method: 'GET', url: entity.href})
 					.success(function(data, status, headers, config) {
-				    	defer.resolve(transformerFunction(data, protocolVersion));
+				    	defer.resolve(transformerFunction(data));
 				    })
 				    .error(function(data, status, headers, config) {
 				    	defer.reject(data);
@@ -68,7 +67,7 @@ angular.module("angularHypermedia")
 				});
 			};
 
-			angular.forEach(this.data.entities, function(entity){
+			angular.forEach(this.entities, function(entity){
 				angular.forEach(entity.rel, function(rel){
 					CreateLazyProperty(resultObject, rel, EntityFactory, entity);
 				});
@@ -79,12 +78,15 @@ angular.module("angularHypermedia")
 		$get: ["$injector", function($injector)
 		{
 			var q = $injector.get("$q");
-			var transformerFunction = function(data, protocolVersion)
+			var transformerFunction = function(data)
 			{
 				var value = {
 					link: function(relName, version)
 					{
-						var url = sirenProvider.GetLinkUrlByRelVersion.call(value.__$$data, relName, version);
+						var Hypermedia = $injector.get("Hypermedia");
+						var protocolVersion = Hypermedia.getConfig().currentVersion;
+
+						var url = sirenProvider.GetLinkUrlByRelVersion.call(value.__$$data, relName, version || protocolVersion);
 						if (!url)
 							throw "Siren provider is unable to get link for rel " + relName + " with version " + version;
 
@@ -94,7 +96,7 @@ angular.module("angularHypermedia")
 
 						http({method: 'GET', url: url})
 							.success(function(data, status, headers, config) {
-						    	defer.resolve(transformerFunction(data, protocolVersion));
+						    	defer.resolve(transformerFunction(data));
 						    })
 						    .error(function(data, status, headers, config) {
 						    	defer.reject(data);
@@ -103,10 +105,11 @@ angular.module("angularHypermedia")
 					}
 				}
 				
-				value.__$$data = {data: data, proto: protocolVersion};
+
+				value.__$$data = data;
 
 				sirenProvider.CreateProperties.call(value.__$$data, value);
-				sirenProvider.CreateEntities.call(value.__$$data, value, $injector, transformerFunction, protocolVersion);
+				sirenProvider.CreateEntities.call(value.__$$data, value, $injector, transformerFunction);
 
 				return value;
 			}

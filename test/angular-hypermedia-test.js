@@ -92,7 +92,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
 		
 		expect(typeof responseData).toBe("object");
 		// Check that response was wrapped into object
-		expect(responseData.__$$data.data).toEqual(apiRootObject);
+		expect(responseData.__$$data).toEqual(apiRootObject);
 	}));
 
 });
