@@ -16,7 +16,7 @@ describe("Siren provider", function () {
 
 		inject(function (_Siren_) {siren = _Siren_;});
 		
-		sirenData = [{
+		sirenData = {
 							"links":[{
 								"rel":[						// Link relations
 									"ver:0.0.1",			// Version
@@ -33,7 +33,7 @@ describe("Siren provider", function () {
 								"url" : "http://localhost:55556/api/2/benefits/mybenefits"
 							}
 							]
-						}];
+						};
 		
 		helperThis = {data: sirenData, proto: "0.0.1"};
 	});
@@ -56,6 +56,28 @@ describe("Siren provider", function () {
     	result = sirenProvider.GetLinkUrlByRelVersion.call(helperThis, "benefits/mybenefits", "0.0.3");
     	expect(result).toBeUndefined();
 
+	});
+    
+    it('GetLinkUrlByRelVersion', function () {
+		var sirenPayload =   
+			{
+				"class": [ "order" ],
+				"properties": { 
+					"orderNumber": 42, 
+					"itemCount": 3,
+					"status": "pending"
+				}
+			};
+		
+		var helperThisNoVer = {data: sirenPayload, proto: null};
+		
+		var result = {};
+
+		sirenProvider.CreateProperties.call(helperThisNoVer, result);
+
+		expect(result.orderNumber).toBe(42);
+		expect(result.itemCount).toBe(3);
+		expect(result.status).toBe('pending');
 	});
 
 });

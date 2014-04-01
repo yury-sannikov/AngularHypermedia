@@ -53,7 +53,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
 				$httpBackend = _$httpBackend_;
 			});
 		
-		apiRootObject = [{
+		apiRootObject = {
 							"links":[{
 								"rel":[						// Link relations
 									"ver:0.0.1",			// Version
@@ -63,7 +63,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
 								"url" : "http://localhost:55556/api/benefits/mybenefits"
 							}
 							]
-						}];
+						};
 
 		hypermediaProvider.setUp({apiRoot: apiRootObject});
 

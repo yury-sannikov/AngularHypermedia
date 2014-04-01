@@ -11,11 +11,20 @@ angular.module("angularHypermedia")
 			version = version || this.proto;
 			version = version ? ("ver:" + version) : "latest-version";
 			
-			var link = _.find(this.data[0].links, function(link) {
+			var link = _.find(this.data.links, function(link) {
 				return (-1 != _.indexOf(link.rel, relName)) && (-1 != _.indexOf(link.rel, version));
 			});
 			
 			return link ? link.url : undefined;
+		},
+
+		CreateProperties: function(resultObject)
+		{
+			if (!this.data.properties)
+				return;
+			angular.forEach(this.data.properties, function(value, key){
+				resultObject[key] = value;
+			});
 		},
 
 		$get: ["$injector", function($injector)
@@ -46,6 +55,8 @@ angular.module("angularHypermedia")
 				}
 				
 				result.__$$data = {data: data, proto: protocolVersion};
+
+				sirenProvider.CreateProperties.call(result.__$$data, result);
 
 				return result;
 			}
