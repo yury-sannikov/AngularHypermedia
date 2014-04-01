@@ -41,9 +41,6 @@ angular.module("angularHypermedia")
 						    .error(function(data, status, headers, config) {
 						    	defer.reject(data);
 						    });						
-
-						
-						defer.resolve(data);
 						return defer.promise;
 					}
 				}

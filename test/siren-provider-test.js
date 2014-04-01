@@ -59,3 +59,4 @@ describe("Siren provider", function () {
 	});
 
 });
+

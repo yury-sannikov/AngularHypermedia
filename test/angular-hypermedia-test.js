@@ -75,19 +75,20 @@ describe("Angular Hypermedia provider, API root as object", function () {
    });
 
     it('resolve link', inject(function ($rootScope) {
-    	$httpBackend.expectGET('http://localhost:55556/api/benefits/mybenefits').respond({});
+    	$httpBackend.when('GET','http://localhost:55556/api/benefits/mybenefits').respond(apiRootObject);
 		
 		var linkResult = hypermedia.link("benefits/mybenefits");
 		
 		expect(typeof linkResult).toBe("object");
 		expect(typeof linkResult.then).toBe("function");
 		
-		var apiRoot;
-		linkResult.then(function(data) {apiRoot = data;});
+		linkResult.then(function(data) {
+			expect(typeof data).toBe("object");
+			// Check that response was wrapped into object
+			expect(data.__$$data.data).toEqual(apiRootObject);
+		});
 		$rootScope.$apply();
 
-		expect(typeof apiRoot).toBe("object");
-		expect(apiRoot).toEqual(apiRootObject);
 		
 		$httpBackend.flush();
 	}));
