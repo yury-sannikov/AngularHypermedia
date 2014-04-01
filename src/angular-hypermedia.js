@@ -12,77 +12,71 @@ angular.module("angularHypermedia", [])
 
 	var apiRootObjectHolder = {};
 
-	return {
-		setUp: function(newConfig)
-		{
-			angular.extend(config, newConfig);
-		},
+	function setUp (newConfig) {
+		angular.extend(config, newConfig);
+	}
 
-		getConfig: function()
-		{
-			return config;
-		},
+	function getConfig () {
+		return config;
+	}
 
-		$get: ["$injector", function($injector)
-		{
+	this.setUp = setUp;
+	this.getConfig = getConfig;
+	this.$get = ["$q", "$http", config.hypermediaFormat, function(q, http, transformerSvc) {
+	
+		var GetApiRoot = function() {
+			var defer = q.defer();
+
+			// apiRoot might be set up not as URL but as result object
+			if (angular.isObject(config.apiRoot))
+				apiRootObjectHolder.data = transformerSvc.transform(config.apiRoot, config.currentVersion);					
+
+			if (apiRootObjectHolder.data) {
+				defer.resolve(apiRootObjectHolder.data);
+				return defer.promise;
+			}
+
+			http({method: 'GET', url: config.apiRoot})
+				.success(function(data, status, headers, config) {
+			    	apiRootObjectHolder.data = transformerSvc.transform(data, config.currentVersion);
+			    	defer.resolve(data);
+			    })
+			    .error(function(data, status, headers, config) {
+			    	defer.reject(data);
+			    });
 			
-			var GetApiRoot = function()
-			{
-				var q = $injector.get("$q");
-				
-				var transformerFunction = $injector.get(config.hypermediaFormat);
+			return defer.promise;
+		};
 
+		return {
+			setUp: setUp,
+			getConfig: getConfig,
+
+			getLink: function(relName, version) {
+				
 				var defer = q.defer();
 
-				// apiRoot might be set up not as URL but as result object
-				if (angular.isObject(config.apiRoot))
-					apiRootObjectHolder.data = transformerFunction(config.apiRoot, config.currentVersion);					
-
-				if (apiRootObjectHolder.data)
-				{
-					defer.resolve(apiRootObjectHolder.data);
-					return defer.promise;
-				}
-
-				var http = $injector.get("$http");
-
-				http({method: 'GET', url: config.apiRoot})
-					.success(function(data, status, headers, config) {
-				    	apiRootObjectHolder.data = transformerFunction(data, config.currentVersion);
-				    	defer.resolve(data);
-				    })
-				    .error(function(data, status, headers, config) {
-				    	defer.reject(data);
-				    });
-				
-				return defer.promise;
-			};
-
-			return {
-				link: function(relName, version)
-				{
-					
-					var q = $injector.get("$q");
-					
-					var defer = q.defer();
-
-					GetApiRoot().then(function(data){
-						data.link(relName, version).then(function(result){
+				GetApiRoot().then(
+					//success
+					function(data) {
+						data.link(relName, version).then(function(result) {
 							defer.resolve(result);
-						}, function(failure)
-						{
+						},
+						function(failure) {
 							console.log(failure);
 							defer.reject(failure);
 						});
-					}, function(data){
+					},
+					//failure
+					function(data) {
 						console.log(data);
 						defer.reject(data);
-					});
+					}
+				);
 
-					return defer.promise;
-				}
-			};
-		}]
-	};
+				return defer.promise;
+			}
+		};
+	}]
 
 });
