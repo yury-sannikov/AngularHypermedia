@@ -17,6 +17,7 @@ module.exports = function(config) {
       'bower/angular/angular.js',
       'bower/angular-mocks/angular-mocks.js',
       'bower/angular-resource/angular-resource.js',
+      'bower/lodash/dist/lodash.compat.js',
       'src/*.js',
       'test/*.js'
     ],

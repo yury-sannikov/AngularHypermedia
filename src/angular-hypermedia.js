@@ -36,7 +36,7 @@ angular.module("angularHypermedia", [])
 
 				// apiRoot might be set up not as URL but as result object
 				if (angular.isObject(config.apiRoot))
-					apiRootObjectHolder.data = transformerFunction(config.apiRoot);					
+					apiRootObjectHolder.data = transformerFunction(config.apiRoot, config.currentVersion);					
 
 				if (apiRootObjectHolder.data)
 				{
@@ -48,7 +48,7 @@ angular.module("angularHypermedia", [])
 
 				http({method: 'GET', url: config.apiRoot})
 					.success(function(data, status, headers, config) {
-				    	apiRootObjectHolder.data = transformerFunction(data);
+				    	apiRootObjectHolder.data = transformerFunction(data, config.currentVersion);
 				    	defer.resolve(data);
 				    })
 				    .error(function(data, status, headers, config) {
