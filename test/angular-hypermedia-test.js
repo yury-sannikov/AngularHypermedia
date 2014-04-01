@@ -37,6 +37,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
 	var hypermediaProvider;
 	var hypermedia;
 	var apiRootObject;
+	var $httpBackend;
 
 	beforeEach(function () {
 		angular.module('testApp', function () {})
@@ -46,7 +47,11 @@ describe("Angular Hypermedia provider, API root as object", function () {
 
 		module('angularHypermedia', 'testApp');
 
-		inject(function (_Hypermedia_) {hypermedia = _Hypermedia_;});
+		inject(function (_Hypermedia_, _$httpBackend_) 
+			{
+				hypermedia = _Hypermedia_;
+				$httpBackend = _$httpBackend_;
+			});
 		
 		apiRootObject = [{
 							"links":[{
@@ -63,9 +68,15 @@ describe("Angular Hypermedia provider, API root as object", function () {
 		hypermediaProvider.setUp({apiRoot: apiRootObject});
 
 	});
-    
-    it('resolve link', inject(function ($rootScope) {
 
+   afterEach(function() {
+     $httpBackend.verifyNoOutstandingExpectation();
+     $httpBackend.verifyNoOutstandingRequest();
+   });
+
+    it('resolve link', inject(function ($rootScope) {
+    	$httpBackend.expectGET('http://localhost:55556/api/benefits/mybenefits').respond({});
+		
 		var linkResult = hypermedia.link("benefits/mybenefits");
 		
 		expect(typeof linkResult).toBe("object");
@@ -77,6 +88,8 @@ describe("Angular Hypermedia provider, API root as object", function () {
 
 		expect(typeof apiRoot).toBe("object");
 		expect(apiRoot).toEqual(apiRootObject);
+		
+		$httpBackend.flush();
 	}));
 
 });

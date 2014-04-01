@@ -21,14 +21,28 @@ angular.module("angularHypermedia")
 		$get: ["$injector", function($injector)
 		{
 			var q = $injector.get("$q");
-			return function(data, protocolVersion)
+			var transformerFunction = function(data, protocolVersion)
 			{
 				var result = {
 					link: function(relName, version)
 					{
-						
 						var url = sirenProvider.GetLinkUrlByRelVersion.call(result.__$$data, relName, version);
+						if (!url)
+							throw "Siren provider is unable to get link for rel " + relName + " with version " + version;
+
+						var http = $injector.get("$http");
+						
 						var defer = q.defer();
+
+						http({method: 'GET', url: url})
+							.success(function(data, status, headers, config) {
+						    	defer.resolve(transformerFunction(data, protocolVersion));
+						    })
+						    .error(function(data, status, headers, config) {
+						    	defer.reject(data);
+						    });						
+
+						
 						defer.resolve(data);
 						return defer.promise;
 					}
@@ -38,6 +52,7 @@ angular.module("angularHypermedia")
 
 				return result;
 			}
+			return transformerFunction;
 		}]
 	}
 
