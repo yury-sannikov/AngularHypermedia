@@ -3,9 +3,9 @@ describe("Siren provider", function () {
 
 	var sirenProvider;
 	var siren;
-	var sirenData;
+	var apiRootData;
 	var helperThis;
-	var sirenPayload;
+	var sirenResponse; 
 	var $injector;
 	var $httpBackend;
 
@@ -24,7 +24,7 @@ describe("Siren provider", function () {
 				$httpBackend =_$httpBackend_;
 			});
 		
-		sirenData = {
+		apiRootData = {
 							"links":[{
 								"rel":[						// Link relations
 									"ver:0.0.1",			// Version
@@ -43,8 +43,9 @@ describe("Siren provider", function () {
 							]
 						};
 		
-		helperThis = {data: sirenData, proto: "0.0.1"};
-		sirenPayload =   
+		helperThis = {data: apiRootData, proto: "0.0.1"};
+		
+		sirenResponse =   
 			{
 				"class": [ "order" ],
 				"properties": { 
@@ -82,7 +83,7 @@ describe("Siren provider", function () {
     	var result = sirenProvider.GetLinkUrlByRelVersion.call(helperThis, "benefits/mybenefits");
     	expect(result).toBe("http://localhost:55556/api/benefits/mybenefits");
 
-		var helperThisNoVer = {data: sirenData, proto: null};
+		var helperThisNoVer = {data: apiRootData, proto: null};
 
     	result = sirenProvider.GetLinkUrlByRelVersion.call(helperThisNoVer, "benefits/mybenefits");
     	expect(result).toBe("http://localhost:55556/api/2/benefits/mybenefits");
@@ -95,7 +96,7 @@ describe("Siren provider", function () {
 	});
     
     it('CreateProperties', function () {
-		var helperThisNoVer = {data: sirenPayload, proto: null};
+		var helperThisNoVer = {data: sirenResponse, proto: null};
 		var result = {};
 		sirenProvider.CreateProperties.call(helperThisNoVer, result);
 		expect(result.orderNumber).toBe(42);
@@ -104,7 +105,7 @@ describe("Siren provider", function () {
 	});
 
     it('CreateEntities from requested data', inject(function ($rootScope) {
-		var helperThisNoVer = {data: sirenPayload, proto: null};
+		var helperThisNoVer = {data: sirenResponse, proto: null};
 		var result = {};
 		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, siren, "0.0.1");
 		
@@ -134,7 +135,7 @@ describe("Siren provider", function () {
 	}));
     
     it('CreateEntities from embedded data', inject(function ($rootScope) {
-		var helperThisNoVer = {data: sirenPayload, proto: null};
+		var helperThisNoVer = {data: sirenResponse, proto: null};
 		var result = {};
 		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, siren, "0.0.1");
 		
