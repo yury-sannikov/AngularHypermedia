@@ -31,7 +31,7 @@ angular.module("angularHypermedia")
 			if (!this.data.entities)
 				return;
 			var q = $injector.get("$q"), http = $injector.get("$http");
-			
+
 			var EntityFactory = function(entity)
 			{
 				var defer = q.defer();
@@ -63,7 +63,6 @@ angular.module("angularHypermedia")
 						}
 						return value;
 					},
-					// keep it enumerable and configurable, certainly not necessary
 					enumerable: true,
 					configurable: true
 				});
@@ -107,6 +106,7 @@ angular.module("angularHypermedia")
 				value.__$$data = {data: data, proto: protocolVersion};
 
 				sirenProvider.CreateProperties.call(value.__$$data, value);
+				sirenProvider.CreateEntities.call(value.__$$data, value, $injector, transformerFunction, protocolVersion);
 
 				return value;
 			}

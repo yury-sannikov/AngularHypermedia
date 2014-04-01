@@ -57,7 +57,16 @@ describe("Siren provider", function () {
 					"class": [ "items", "collection" ], 
 					"rel": [ "orderItems", "items" ], 
 					"href": "http://localhost:55556/api/benefits/myorders"
-				}
+				},
+				{ 
+					"class": [ "shipping", "customer" ], 
+					"rel": [ "shipping" ], 
+					"href": "http://localhost:55556/api/benefits/shipping",
+					"properties": { 
+						"city": "New York", 
+						"zip": 12345
+					}
+				},
 				]
 			};
 	});
@@ -94,7 +103,7 @@ describe("Siren provider", function () {
 		expect(result.status).toBe('pending');
 	});
 
-    it('CreateEntities', inject(function ($rootScope) {
+    it('CreateEntities from requested data', inject(function ($rootScope) {
 		var helperThisNoVer = {data: sirenPayload, proto: null};
 		var result = {};
 		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, siren, "0.0.1");
@@ -123,6 +132,28 @@ describe("Siren provider", function () {
 
 		expect(orderData.parentOrderId).toBe(54);
 	}));
+    
+    it('CreateEntities from embedded data', inject(function ($rootScope) {
+		var helperThisNoVer = {data: sirenPayload, proto: null};
+		var result = {};
+		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, siren, "0.0.1");
+		
+		// Entities are always properties. First access triggers data request
+		expect("orderItems" in result).toBe(true);
+		expect("items" in result).toBe(true);
+		expect("shipping" in result).toBe(true);
 
+		expect(typeof result.shipping.then).toBe("function");
+
+		var shippingData;
+		result.shipping.then(function(data) {
+			shippingData = data;
+		});
+		
+		$rootScope.$apply();
+
+		expect(shippingData.city).toBe("New York");
+		expect(shippingData.zip).toBe(12345);
+	}));
 });
 
