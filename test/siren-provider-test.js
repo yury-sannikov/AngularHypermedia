@@ -5,6 +5,9 @@ describe("Siren provider", function () {
 	var siren;
 	var sirenData;
 	var helperThis;
+	var sirenPayload;
+	var $injector;
+	var $httpBackend;
 
 	beforeEach(function () {
 		angular.module('testApp', function () {})
@@ -14,7 +17,12 @@ describe("Siren provider", function () {
 
 		module('angularHypermedia', 'testApp');
 
-		inject(function (_Siren_) {siren = _Siren_;});
+		inject(function (_Siren_, _$injector_, _$httpBackend_) 
+			{
+				siren = _Siren_; 
+				$injector = _$injector_;
+				$httpBackend =_$httpBackend_;
+			});
 		
 		sirenData = {
 							"links":[{
@@ -36,8 +44,28 @@ describe("Siren provider", function () {
 						};
 		
 		helperThis = {data: sirenData, proto: "0.0.1"};
+		sirenPayload =   
+			{
+				"class": [ "order" ],
+				"properties": { 
+					"orderNumber": 42, 
+					"itemCount": 3,
+					"status": "pending"
+				},
+				"entities": [
+				{ 
+					"class": [ "items", "collection" ], 
+					"rel": [ "orderItems", "items" ], 
+					"href": "http://localhost:55556/api/benefits/myorders"
+				}
+				]
+			};
 	});
 
+   afterEach(function() {
+     $httpBackend.verifyNoOutstandingExpectation();
+     $httpBackend.verifyNoOutstandingRequest();
+   });
 
     it('GetLinkUrlByRelVersion', function () {
     	expect(typeof sirenProvider.GetLinkUrlByRelVersion).toBe("function");
@@ -55,29 +83,32 @@ describe("Siren provider", function () {
 
     	result = sirenProvider.GetLinkUrlByRelVersion.call(helperThis, "benefits/mybenefits", "0.0.3");
     	expect(result).toBeUndefined();
-
 	});
     
-    it('GetLinkUrlByRelVersion', function () {
-		var sirenPayload =   
-			{
-				"class": [ "order" ],
-				"properties": { 
-					"orderNumber": 42, 
-					"itemCount": 3,
-					"status": "pending"
-				}
-			};
-		
+    it('CreateProperties', function () {
 		var helperThisNoVer = {data: sirenPayload, proto: null};
-		
 		var result = {};
-
 		sirenProvider.CreateProperties.call(helperThisNoVer, result);
-
 		expect(result.orderNumber).toBe(42);
 		expect(result.itemCount).toBe(3);
 		expect(result.status).toBe('pending');
+	});
+
+    it('CreateEntities', function () {
+		var helperThisNoVer = {data: sirenPayload, proto: null};
+		var result = {};
+		sirenProvider.CreateEntities.call(helperThisNoVer, result, $injector, angular.identity, "0.0.1");
+		
+		// Entities are always properties. First access triggers data request
+		expect("orderItems" in result).toBe(true);
+		expect("items" in result).toBe(true);
+
+		//Check that access to property invokes http request and return promise
+		$httpBackend.when('GET','http://localhost:55556/api/benefits/myorders').respond({});
+
+		expect(typeof result.orderItems.then).toBe("function");
+
+		$httpBackend.flush();
 	});
 
 });
