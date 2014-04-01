@@ -11,14 +11,43 @@ module.exports = function (grunt) {
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON("package.json"),
+		clean :
+		{
+			'clean': 
+			[
+				'build' 
+			],
+		},
 		uglify: {
 			options: {
 				banner: "/*!\n * <%= pkg.name %> <%= pkg.version %>-<%= grunt.template.today('yyyymmdd') %>\n * http://github.nreca.org/yxs0/angular-hypermedia\n */\n"
 			},
 			build: {
-				src: "src/<%= pkg.name %>.js",
-				dest: "build/<%= pkg.name %>.min.js"
+				src: "build/<%= pkg.name %>.js",
+				dest: "build/<%= pkg.name %>.js"
 			}
+		},
+		concat: {
+			compile_js: {
+				options: {
+				},
+				src: [
+					'src/*.js'
+				],
+				dest: 'build/<%= pkg.name %>.js'
+			}
+		},
+		copy: {
+			publish : {
+				files: [
+				{
+					src: [ 'build/<%= pkg.name %>.js' ],
+					dest: 'lib/<%= pkg.name %>.min.js',
+					cwd: '.',
+					expand: false
+				}
+				]
+			},		
 		},
 		karma: {
 			unit: {
@@ -27,11 +56,16 @@ module.exports = function (grunt) {
 			continuous: {
 				configFile: "karma.conf.js",
 				singleRun: true
+			},
+			continuous_minified: {
+				configFile: "karma.conf.build.js",
+				singleRun: true
 			}
 		}
 	});
 
-	grunt.registerTask("default", ["karma:continuous", "uglify"]);
+	grunt.registerTask("default", ["clean","karma:continuous", "concat", "uglify"]);
+	grunt.registerTask("publish", ["clean", "concat", "uglify", "karma:continuous_minified", "copy"]);
 
 	grunt.registerTask("startTestServer", ["karma:unit:start"]);
 	grunt.registerTask("runTests", ["karma:unit:run"]);
