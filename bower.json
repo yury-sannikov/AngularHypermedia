@@ -7,8 +7,7 @@
     "angular-resource": "1.2.13"
   },
   "dependencies": {
-    "angular": "1.2.13",
-    "lodash": "2.4.1"
+    "angular": "1.2.13"
   },
   "authors": [
     "Yuriy Sannikov <yury.sannikov@gmail.com>"

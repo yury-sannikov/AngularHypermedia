@@ -27,7 +27,7 @@ describe("Angular Hypermedia provider", function () {
     });
     
     it('should have link function', function () {
-		expect(typeof hypermedia.link).toBe("function");
+		expect(typeof hypermedia.getLink).toBe("function");
 	});
 
 });
@@ -47,23 +47,23 @@ describe("Angular Hypermedia provider, API root as object", function () {
 
 		module('angularHypermedia', 'testApp');
 
-		inject(function (_Hypermedia_, _$httpBackend_) 
-			{
-				hypermedia = _Hypermedia_;
-				$httpBackend = _$httpBackend_;
-			});
+		inject(function (_Hypermedia_, _$httpBackend_) {
+			hypermedia = _Hypermedia_;
+			$httpBackend = _$httpBackend_;
+		});
 		
 		apiRootObject = {
-							"links":[{
-								"rel":[						// Link relations
-									"ver:0.0.1",			// Version
-									"latest-version",		// API current version mark (http://tools.ietf.org/html/rfc5829#section-3.2)
-									"benefits/mybenefits",	// API name
-								],
-								"url" : "http://localhost:55556/api/benefits/mybenefits"
-							}
-							]
-						};
+			"links":[
+        {
+					"rel":[						// Link relations
+						"ver:0.0.1",			// Version
+						"latest-version",		// API current version mark (http://tools.ietf.org/html/rfc5829#section-3.2)
+						"benefits/mybenefits",	// API name
+					],
+					"url" : "http://localhost:55556/api/benefits/mybenefits"
+				}
+			]
+		};
 
 		hypermediaProvider.setUp({apiRoot: apiRootObject});
 
@@ -77,8 +77,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
     it('resolve link', inject(function ($rootScope) {
     	$httpBackend.when('GET','http://localhost:55556/api/benefits/mybenefits').respond(apiRootObject);
 		
-		var linkResult = hypermedia.link("benefits/mybenefits");
-		
+		var linkResult = hypermedia.getLink("benefits/mybenefits");
 		expect(typeof linkResult).toBe("object");
 		expect(typeof linkResult.then).toBe("function");
 		
@@ -92,7 +91,8 @@ describe("Angular Hypermedia provider, API root as object", function () {
 		
 		expect(typeof responseData).toBe("object");
 		// Check that response was wrapped into object
-		expect(responseData.__$$data).toEqual(apiRootObject);
+		var url = responseData.getUrl("benefits/mybenefits");
+		expect(url).toEqual(apiRootObject.links[0].url);
 	}));
 
 });
