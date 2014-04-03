@@ -38,11 +38,11 @@ angular.module("angularHypermedia", [])
 			}
 
 			http({method: 'GET', url: config.apiRoot})
-				.success(function(data, status, headers, config) {
+				.success(function(data, status, headers, cfg) {
 			    	apiRootObjectHolder.data = transformerSvc.transform(data, config.currentVersion);
-			    	defer.resolve(data);
+			    	defer.resolve(apiRootObjectHolder.data);
 			    })
-			    .error(function(data, status, headers, config) {
+			    .error(function(data, status, headers, cfg) {
 			    	defer.reject(data);
 			    });
 			
