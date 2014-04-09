@@ -25,7 +25,7 @@ describe("Siren provider", function () {
 						"ver:0.0.1",			// Version
 						"benefits/mybenefits",	// API name
 					],
-					"url" : "http://localhost:55556/api/benefits/mybenefits"
+					"href" : "http://localhost:55556/api/benefits/mybenefits"
 				},
 				{
 					"rel":[						// Link relations
@@ -33,7 +33,7 @@ describe("Siren provider", function () {
 						"latest-version",		// API current version mark (http://tools.ietf.org/html/rfc5829#section-3.2)
 						"benefits/mybenefits",	// API name
 					],
-					"url" : "http://localhost:55556/api/2/benefits/mybenefits"
+					"href" : "http://localhost:55556/api/2/benefits/mybenefits"
 				}
 			]
 		};

@@ -12,13 +12,20 @@ angular.module("angularHypermedia")
 			var ii, link;
 			for (ii = 0; ii < links.length; ii++) {
 				link = links[ii];
-				if ((-1 != link.rel.indexOf(relName)) && (-1 != link.rel.indexOf(version))) {
-					return link;
+				if (-1 != link.rel.indexOf(relName)){
+					
+					if (link.rel.length == 1){
+						return link;
+					}
+					
+					if (-1 != link.rel.indexOf(version)) {
+						return link;
+					}
 				}
 			}
 		})(links);
 		
-		return link ? link.url : undefined;
+		return link ? link.href : undefined;
 	}
 
 	function CreateEntities (entities, resultObject, transformerFunction, protocolVersion) {

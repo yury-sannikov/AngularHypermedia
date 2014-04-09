@@ -60,7 +60,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
 						"latest-version",		// API current version mark (http://tools.ietf.org/html/rfc5829#section-3.2)
 						"benefits/mybenefits",	// API name
 					],
-					"url" : "http://localhost:55556/api/benefits/mybenefits"
+					"href" : "http://localhost:55556/api/benefits/mybenefits"
 				}
 			]
 		};
@@ -92,7 +92,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
 		expect(typeof responseData).toBe("object");
 		// Check that response was wrapped into object
 		var url = responseData.getUrl("benefits/mybenefits");
-		expect(url).toEqual(apiRootObject.links[0].url);
+		expect(url).toEqual(apiRootObject.links[0].href);
 	}));
 
 });
