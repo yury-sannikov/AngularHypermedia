@@ -8,7 +8,6 @@ describe("Siren provider", function () {
 	var $httpBackend;
 
 	beforeEach(function () {
-
 		module('angularHypermedia');
 
 		inject(function (_Siren_, _$injector_, _$httpBackend_) 
@@ -137,4 +136,17 @@ describe("Siren provider", function () {
 		expect(shippingData.city).toBe("New York");
 		expect(shippingData.zip).toBe(12345);
 	}));
+	
+	it('get links', inject(function ($rootScope) {
+		expect(typeof siren.transform).toBe("function");
+
+		var transformed = siren.transform(apiRootData, "0.0.1");
+
+		expect(typeof transformed.links).toBe("function");
+
+		var links = transformed.links();
+		expect(links.length).toBe(apiRootData.links.length);
+		expect(links).toEqual(apiRootData.links);
+	}));
+
 });

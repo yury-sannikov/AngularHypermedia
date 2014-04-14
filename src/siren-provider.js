@@ -96,6 +96,12 @@ angular.module("angularHypermedia")
 					    });
 					return defer.promise;
 				},
+				
+				links: function()
+				{
+					return data.links;					
+				},
+
 				getUrl: function(relName, version)
 				{
 					return GetLinkUrlByRelVersion(data.links, relName, version || protocolVersion);
