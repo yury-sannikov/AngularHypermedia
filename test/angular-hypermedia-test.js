@@ -91,8 +91,8 @@ describe("Angular Hypermedia provider, API root as object", function () {
 		
 		expect(typeof responseData).toBe("object");
 		// Check that response was wrapped into object
-		var url = responseData.getUrl("benefits/mybenefits");
-		expect(url).toEqual(apiRootObject.links[0].href);
+		var links = responseData.links();
+		expect(links).toEqual(apiRootObject.links);
 	}));
 
 });
