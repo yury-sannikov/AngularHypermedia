@@ -100,6 +100,11 @@ angular.module("angularHypermedia")
 				links: function()
 				{
 					return data.links;					
+				},
+
+				actions : function()
+				{
+					return data.actions;
 				}
 			}
 			

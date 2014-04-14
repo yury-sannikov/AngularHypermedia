@@ -61,6 +61,20 @@ describe("Siren provider", function () {
 							"zip": 12345
 						}
 					},
+				],
+				"actions": [
+				{
+					"name": "add-item",
+					"title": "Add Item",
+					"method": "POST",
+					"href": "http://api.x.io/orders/42/items",
+					"type": "application/x-www-form-urlencoded",
+					"fields": [
+						{ "name": "orderNumber", "type": "hidden", "value": "42" },
+						{ "name": "productCode", "type": "text" },
+						{ "name": "quantity", "type": "number" }
+					]
+				}
 				]
 			};
 	});
@@ -147,6 +161,18 @@ describe("Siren provider", function () {
 		var links = transformed.links();
 		expect(links.length).toBe(apiRootData.links.length);
 		expect(links).toEqual(apiRootData.links);
+	}));
+
+	it('get actions', inject(function ($rootScope) {
+		expect(typeof siren.transform).toBe("function");
+
+		var transformed = siren.transform(sirenResponse, "0.0.1");
+
+		expect(typeof transformed.actions).toBe("function");
+
+		var actions = transformed.actions();
+		expect(actions.length).toBe(sirenResponse.actions.length);
+		expect(actions).toEqual(sirenResponse.actions);
 	}));
 
 });
