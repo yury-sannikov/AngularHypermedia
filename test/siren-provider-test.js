@@ -420,6 +420,23 @@ describe("Siren provider", function () {
 			expect(orderData.Id).toBe(2);
 		}));
 	});
+	
+	describe("transform non-siren object", function () {
+		it('non get', inject(function ($rootScope) {
+
+			var source = {
+				id: 1,
+				name: 'test',
+				value: 507.65
+			};
+
+			var trasfromed = siren.transform(source, "0.0.1");
+			expect(trasfromed.id).toBe(source.id);
+			expect(trasfromed.name).toBe(source.name);
+			expect(trasfromed.value).toBe(source.value);
+
+		}));
+	});
 
 
 });

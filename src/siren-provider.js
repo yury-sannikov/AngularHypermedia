@@ -11,6 +11,11 @@ angular.module("angularHypermedia")
 	};
 
 	function GetLinkUrlByRelVersion (links, relName, version) {
+
+		//Rel is a URL. Return it back
+		if (relName.indexOf("/") == 0 || relName.indexOf("http") == 0)
+			return relName;
+
 		version = version ? ("ver:" + version) : "latest-version";
 		
 		//This is O(n^2); if the API becomes large, we'll want to devise a map of rel -> link rather than searching each time
@@ -173,12 +178,12 @@ angular.module("angularHypermedia")
 				
 				this.links =function()
 				{
-					return data.links;					
+					return data.links || [];					
 				}
 
 				this.actions = function()
 				{
-					return data.actions;
+					return data.actions || [];
 				}
 
 				this.action = function(actionName, actionData)
@@ -215,8 +220,14 @@ angular.module("angularHypermedia")
 					return defer.promise;
 				}
 
-				angular.extend(this, data.properties);
-				CreateEntities(data.entities, this, t, protocolVersion);
+				var isSiren = angular.isObject(data.properties) || angular.isArray(data.links) || angular.isArray(data.actions); 
+				
+				if (isSiren) {
+					angular.extend(this, data.properties);
+					CreateEntities(data.entities, this, t, protocolVersion);
+				} else {
+					angular.extend(this, data);
+				}
 			}
 			
 
