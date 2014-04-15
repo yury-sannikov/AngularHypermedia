@@ -26,7 +26,7 @@ angular.module("angularHypermedia")
 		})(links);
 		
 		return link ? link.href : undefined;
-	}
+	};
 
 	function CreateEntities (entities, resultObject, transformerFunction, protocolVersion) {
 		var EntityFactory = function (entity) {
@@ -73,13 +73,81 @@ angular.module("angularHypermedia")
 
 	};
 
+	function GetActionByName(actions, actionName)
+	{
+		var i;
+		for (i = 0; i < actions.length; i++) {
+			if (actions[i].name == actionName)
+				return actions[i];
+		}
+		return undefined;
+	};
+
+	function ValidateActionData(action, actionData)
+	{
+		if (!actionData)
+			return undefined;
+		
+		if (!action)
+			throw "Invalid parameter 'action'";
+
+		if (!action.fields || (angular.isArray(action.fields) && action.fields.length == 0))
+			return undefined;
+
+		var i;
+		for (i = 0; i < action.fields.length; i++){
+			var fieldName = action.fields[i].name;
+			if (typeof actionData[fieldName] === "undefined")
+				return "Action validation error: Supplied data doesn't contain field '" + fieldName + "'";
+		}
+
+		for(var key in actionData) {
+			for (i = 0; i < action.fields.length; i++){
+				var fieldName = action.fields[i].name;
+				if (key === fieldName){
+					key = null;
+					break;
+				}
+			}
+			if (key)
+				return "Action validation error: Supplied data contains extra field '" + key + "'";
+		}
+
+		return undefined;
+	};
+
+	function SubstituteQueryParameters(url, actionData)
+	{
+		if (!url)
+			return url;
+		var match = url.match(/=:[^&]+/g);
+		if (!match)
+			return url;
+		var i;
+		
+		for(i = 0; i < match.length; i++) {
+			var varNameUrl = match[i].replace("=", "");
+			var varName = varNameUrl.slice(1);
+			if (typeof actionData[varName] === "undefined")
+				throw "Unable to substitute query parameter: unknow variable '" + varName + "'";
+
+			var dataToReplace = encodeURIComponent(actionData[varName]);
+			url = url.replace(new RegExp(varNameUrl, "g"), dataToReplace);
+		}
+
+		return url;
+	}
+
 	return {
 		GetLinkUrlByRelVersion: GetLinkUrlByRelVersion,
 		CreateEntities: CreateEntities,
+		GetActionByName : GetActionByName,
+		ValidateActionData : ValidateActionData,
+		SubstituteQueryParameters : SubstituteQueryParameters,
 
 		transform: function t (data, protocolVersion) {
-			var value = {
-				link: function(relName, version)
+			var ctor = function (data, protocolVersion) {
+				this.link = function(relName, version)
 				{
 					var url = GetLinkUrlByRelVersion(data.links, relName, version || protocolVersion);
 					if (!url)
@@ -95,23 +163,64 @@ angular.module("angularHypermedia")
 					    	defer.reject(data);
 					    });
 					return defer.promise;
-				},
+				}
 				
-				links: function()
+				this.links =function()
 				{
 					return data.links;					
-				},
+				}
 
-				actions : function()
+				this.actions = function()
 				{
 					return data.actions;
 				}
+
+				this.action = function(actionName, actionData)
+				{
+					var action = GetActionByName(data.actions, actionName);
+					
+					if (!action)
+						throw "Siren provider is unable to get action with name " + actionName;
+
+					var validate = ValidateActionData(action, actionData);
+					
+					if (!!validate)
+						throw "Action " + actionName + " has the following data errors: " + validate;
+
+					var method = (action.method || 'GET').toUpperCase();
+					
+					var config = {method: method, url: action.href};
+					
+					if (method === 'GET') {
+						config.url = SubstituteQueryParameters(config.url, actionData);
+					} else { 
+						config.data = actionData;
+					}
+
+					var defer = q.defer();
+
+					http(config)
+						.success(function(data, status, headers, config) {
+					    	defer.resolve(t(data, protocolVersion));
+					    })
+					    .error(function(data, status, headers, config) {
+					    	defer.reject(data);
+					    });
+					return defer.promise;
+				}
+
+				angular.extend(this, data.properties);
+				CreateEntities(data.entities, this, t, protocolVersion);
 			}
 			
-			angular.extend(value, data.properties);
-			CreateEntities(data.entities, value, t, protocolVersion);
 
-			return value;
+			if (!angular.isArray(data))
+				return new ctor(data, protocolVersion);
+
+			var result = [];
+			for(var el in data)
+				result.push(new ctor(data[el], protocolVersion));
+			return result;
 		}
 	};
 }]);
