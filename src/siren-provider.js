@@ -4,6 +4,12 @@
 angular.module("angularHypermedia")
 .service("Siren",  ["$q", "$http", function (q, http) {	
 
+	var sirenConfig = {
+ 		headers: {
+ 			accept:"application/vnd.siren+json"
+ 		}
+	};
+
 	function GetLinkUrlByRelVersion (links, relName, version) {
 		version = version ? ("ver:" + version) : "latest-version";
 		
@@ -37,7 +43,7 @@ angular.module("angularHypermedia")
 				return defer.promise;
 			}
 
-			http({method: 'GET', url: entity.href})
+			http({method: 'GET', url: entity.href, headers: sirenConfig.headers})
 				.success(function (data, status, headers, config) {
 			    	defer.resolve(transformerFunction(data, protocolVersion));
 			    })
@@ -155,7 +161,7 @@ angular.module("angularHypermedia")
 					
 					var defer = q.defer();
 
-					http({method: 'GET', url: url})
+					http({method: 'GET', url: url, headers: sirenConfig.headers})
 						.success(function(data, status, headers, config) {
 					    	defer.resolve(t(data, protocolVersion));
 					    })
@@ -189,7 +195,7 @@ angular.module("angularHypermedia")
 
 					var method = (action.method || 'GET').toUpperCase();
 					
-					var config = {method: method, url: action.href};
+					var config = {method: method, url: action.href, headers: sirenConfig.headers};
 					
 					if (method === 'GET') {
 						config.url = SubstituteQueryParameters(config.url, actionData);

@@ -64,13 +64,11 @@ module.exports = function (grunt) {
 		}
 	});
 
-	grunt.registerTask("default", ["clean","karma:continuous", "concat", "uglify"]);
+	grunt.registerTask("default", ["clean","karma:continuous", "concat", "uglify", "copy"]);
 	grunt.registerTask("publish", ["clean", "concat", "uglify", "karma:continuous_minified", "copy"]);
 
 	grunt.registerTask("startTestServer", ["karma:unit:start"]);
 	grunt.registerTask("runTests", ["karma:unit:run"]);
 	grunt.registerTask("test", ["karma:continuous"]);
-  	grunt.registerTask('build', ['clean', 'jshint',
-    	'copy:build_appjs', 'copy:build_unitjs', 'copy:build_vendorjs']);
 
 };

@@ -37,7 +37,7 @@ angular.module("angularHypermedia", [])
 				return defer.promise;
 			}
 
-			http({method: 'GET', url: config.apiRoot})
+			http({method: 'GET', url: config.apiRoot, headers: {accept:"application/vnd.siren+json"}})
 				.success(function(data, status, headers, cfg) {
 			    	apiRootObjectHolder.data = transformerSvc.transform(data, config.currentVersion);
 			    	defer.resolve(apiRootObjectHolder.data);
