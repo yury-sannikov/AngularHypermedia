@@ -53,7 +53,7 @@ angular.module("angularHypermedia")
 			    	defer.resolve(transformerFunction(data, protocolVersion));
 			    })
 			    .error(function(data, status, headers, config) {
-			    	defer.reject(data);
+			    	defer.reject({data: data, status: status, headers:headers, config: config});
 			    });						
 
 			return defer.promise;
@@ -86,6 +86,9 @@ angular.module("angularHypermedia")
 
 	function GetActionByName(actions, actionName)
 	{
+		if (!angular.isArray(actions))
+			return undefined;
+
 		var i;
 		for (i = 0; i < actions.length; i++) {
 			if (actions[i].name == actionName)
@@ -96,20 +99,20 @@ angular.module("angularHypermedia")
 
 	function ValidateActionData(action, actionData)
 	{
-		if (!actionData)
-			return undefined;
-		
 		if (!action)
 			throw "Invalid parameter 'action'";
 
 		if (!action.fields || (angular.isArray(action.fields) && action.fields.length == 0))
 			return undefined;
 
+		if (!actionData)
+			return "Data should be supplied";
+
 		var i;
 		for (i = 0; i < action.fields.length; i++){
 			var fieldName = action.fields[i].name;
 			if (typeof actionData[fieldName] === "undefined")
-				return "Action validation error: Supplied data doesn't contain field '" + fieldName + "'";
+				return "Supplied data doesn't contain field '" + fieldName + "'";
 		}
 
 		for(var key in actionData) {
@@ -121,7 +124,7 @@ angular.module("angularHypermedia")
 				}
 			}
 			if (key)
-				return "Action validation error: Supplied data contains extra field '" + key + "'";
+				return "Supplied data contains extra field '" + key + "'";
 		}
 
 		return undefined;
@@ -149,30 +152,58 @@ angular.module("angularHypermedia")
 		return url;
 	}
 
+	function SimulateHTTPErrorFromException(err) {
+		
+		var message = "An error occurred", 
+			status = angular.isNumber(err) ? err : 500;
+		
+		if (angular.isString(err)) {
+			message = err;
+		} else if (angular.isObject(err)) {
+			message = err.message || message;
+			status = err.status || status; 
+		}
+
+		return {
+			data: { 
+				Message: message
+			}, 
+			status: status, 
+			headers: angular.noop, 
+			config: {}
+		};
+	}
+
 	return {
 		GetLinkUrlByRelVersion: GetLinkUrlByRelVersion,
 		CreateEntities: CreateEntities,
 		GetActionByName : GetActionByName,
 		ValidateActionData : ValidateActionData,
 		SubstituteQueryParameters : SubstituteQueryParameters,
+		SimulateHTTPErrorFromException : SimulateHTTPErrorFromException,
 
 		transform: function t (data, protocolVersion) {
 			var ctor = function (data, protocolVersion) {
 				this.link = function(relName, version)
 				{
-					var url = GetLinkUrlByRelVersion(data.links, relName, version || protocolVersion);
-					if (!url)
-						throw "Siren provider is unable to get link for rel " + relName + " with version " + version;
-					
 					var defer = q.defer();
+					try {
+						var urlVer = version || protocolVersion;
+						var url = GetLinkUrlByRelVersion(data.links, relName, urlVer);
+						if (!url)
+							throw {status: 404, message: "Rel " + relName + "/" + urlVer + " not found."};
 
-					http({method: 'GET', url: url, headers: sirenConfig.headers})
-						.success(function(data, status, headers, config) {
-					    	defer.resolve(t(data, protocolVersion));
-					    })
-					    .error(function(data, status, headers, config) {
-					    	defer.reject(data);
-					    });
+						http({method: 'GET', url: url, headers: sirenConfig.headers})
+							.success(function(data, status, headers, config) {
+						    	defer.resolve(t(data, protocolVersion));
+						    })
+						    .error(function(data, status, headers, config) {
+						    	defer.reject({data: data, status: status, headers:headers, config: config});
+						    });
+					}
+					catch(err) {
+						defer.reject(SimulateHTTPErrorFromException(err));	
+					}
 					return defer.promise;
 				}
 				
@@ -188,35 +219,39 @@ angular.module("angularHypermedia")
 
 				this.action = function(actionName, actionData)
 				{
-					var action = GetActionByName(data.actions, actionName);
-					
-					if (!action)
-						throw "Siren provider is unable to get action with name " + actionName;
-
-					var validate = ValidateActionData(action, actionData);
-					
-					if (!!validate)
-						throw "Action " + actionName + " has the following data errors: " + validate;
-
-					var method = (action.method || 'GET').toUpperCase();
-					
-					var config = {method: method, url: action.href, headers: sirenConfig.headers};
-					
-					if (method === 'GET') {
-						config.url = SubstituteQueryParameters(config.url, actionData);
-					} else { 
-						config.data = actionData;
-					}
-
 					var defer = q.defer();
+					try {
+						var action = GetActionByName(data.actions, actionName);
+						
+						if (!action)
+							throw {status: 403, message: "Action '" + actionName + "' forbidden."};
 
-					http(config)
-						.success(function(data, status, headers, config) {
-					    	defer.resolve(t(data, protocolVersion));
-					    })
-					    .error(function(data, status, headers, config) {
-					    	defer.reject(data);
-					    });
+						var validate = ValidateActionData(action, actionData);
+						
+						if (!!validate)
+							throw {status: 400, message: "Bad request '" + actionName + "'. Message: " + validate};
+
+						var method = (action.method || 'GET').toUpperCase();
+						
+						var config = {method: method, url: action.href, headers: sirenConfig.headers};
+						
+						if (method === 'GET') {
+							config.url = SubstituteQueryParameters(config.url, actionData);
+						} else { 
+							config.data = actionData;
+						}
+
+						http(config)
+							.success(function(data, status, headers, config) {
+						    	defer.resolve(t(data, protocolVersion));
+						    })
+						    .error(function(data, status, headers, config) {
+						    	defer.reject({data: data, status: status, headers:headers, config: config});
+						    });
+					}
+					catch(err) {
+						defer.reject(SimulateHTTPErrorFromException(err));	
+					}
 					return defer.promise;
 				}
 

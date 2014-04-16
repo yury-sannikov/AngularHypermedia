@@ -38,6 +38,7 @@ describe("Siren provider", function () {
 			]
 		};
 		
+
 		
 		sirenResponse =   
 			{
@@ -436,6 +437,78 @@ describe("Siren provider", function () {
 			expect(trasfromed.value).toBe(source.value);
 
 		}));
+	});
+	
+	describe("error handling", function () {
+		it('convert exception to HTTP error', inject(function ($rootScope) {
+
+			var err = siren.SimulateHTTPErrorFromException();
+			expect(err).toEqual({data:{Message:"An error occurred"}, status:500, headers: angular.noop, config: {}});
+
+			err = siren.SimulateHTTPErrorFromException(405);
+			expect(err).toEqual({data:{Message:"An error occurred"}, status:405, headers: angular.noop, config: {}});
+
+			err = siren.SimulateHTTPErrorFromException("shit happens");
+			expect(err).toEqual({data:{Message:"shit happens"}, status:500, headers: angular.noop, config: {}});
+
+			err = siren.SimulateHTTPErrorFromException({message: "shit happens"});
+			expect(err).toEqual({data:{Message:"shit happens"}, status:500, headers: angular.noop, config: {}});
+
+			err = siren.SimulateHTTPErrorFromException({message: "shit happens", status: 502});
+			expect(err).toEqual({data:{Message:"shit happens"}, status:502, headers: angular.noop, config: {}});
+
+			err = siren.SimulateHTTPErrorFromException({status: 502});
+			expect(err).toEqual({data:{Message:"An error occurred"}, status:502, headers: angular.noop, config: {}});
+
+			var err = siren.SimulateHTTPErrorFromException({});
+			expect(err).toEqual({data:{Message:"An error occurred"}, status:500, headers: angular.noop, config: {}});
+
+			var err = siren.SimulateHTTPErrorFromException([]);
+			expect(err).toEqual({data:{Message:"An error occurred"}, status:500, headers: angular.noop, config: {}});
+		}));
+
+		it('no link error', inject(function ($rootScope) {
+			var transformed = siren.transform(apiRootData, "0.0.1");
+
+			var link = transformed.link("no-rel-found");
+
+			var result;
+			link.catch(function(err) {result = err;});
+			$rootScope.$apply();
+
+			expect(result).toEqual({data:{Message: 'Rel no-rel-found/0.0.1 not found.'}, status: 404, headers: angular.noop, config: {}});
+		}));
+
+		it('no action error', inject(function ($rootScope) {
+			var transformed = siren.transform(apiRootData, "0.0.1");
+
+			var link = transformed.action("nonexistent-action");
+
+			var result;
+			link.catch(function(err) {result = err;});
+			$rootScope.$apply();
+
+			expect(result).toEqual({data:{Message: "Action 'nonexistent-action' forbidden."}, status: 403, headers: angular.noop, config: {}});
+		}));
+
+		it('action invalid parameters error', inject(function ($rootScope) {
+			var transformed = siren.transform(sirenResponse, "0.0.1");
+
+			var link = transformed.action("add-item");
+
+			var result;
+			link.catch(function(err) {result = err;});
+			$rootScope.$apply();
+
+			expect(result).toEqual({data:{Message: "Bad request 'add-item'. Message: Data should be supplied"}, status: 400, headers: angular.noop, config: {}});
+
+			link = transformed.action("add-item", {id: 1});
+			link.catch(function(err) {result = err;});
+			$rootScope.$apply();
+
+			expect(result).toEqual({data:{Message: "Bad request 'add-item'. Message: Supplied data doesn't contain field 'orderNumber'"}, status: 400, headers: angular.noop, config: {}});
+		}));
+
 	});
 
 

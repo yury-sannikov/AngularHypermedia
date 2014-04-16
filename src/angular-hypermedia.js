@@ -43,7 +43,7 @@ angular.module("angularHypermedia", [])
 			    	defer.resolve(apiRootObjectHolder.data);
 			    })
 			    .error(function(data, status, headers, cfg) {
-			    	defer.reject(data);
+			    	defer.reject({data: data, status: status, headers: headers, config: cfg});
 			    });
 			
 			return defer.promise;
@@ -64,13 +64,11 @@ angular.module("angularHypermedia", [])
 							defer.resolve(result);
 						},
 						function(failure) {
-							console.log(failure);
 							defer.reject(failure);
 						});
 					},
 					//failure
 					function(data) {
-						console.log(data);
 						defer.reject(data);
 					}
 				);
