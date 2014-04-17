@@ -165,6 +165,7 @@ describe("Siren provider", function () {
   afterEach(function() {
     $httpBackend.verifyNoOutstandingExpectation();
     $httpBackend.verifyNoOutstandingRequest();
+    $httpBackend.resetExpectations();
   });
 
   it('GetLinkUrlByRelVersion', function () {
@@ -422,8 +423,8 @@ describe("Siren provider", function () {
 		}));
 	});
 	
-	describe("transform non-siren object", function () {
-		it('non get', inject(function ($rootScope) {
+	describe("handle non-siren object", function () {
+		it('transform function', inject(function ($rootScope) {
 
 			var source = {
 				id: 1,
@@ -435,7 +436,117 @@ describe("Siren provider", function () {
 			expect(trasfromed.id).toBe(source.id);
 			expect(trasfromed.name).toBe(source.name);
 			expect(trasfromed.value).toBe(source.value);
+		}));
 
+		it('transform function actions', inject(function ($rootScope) {
+
+			var source = {
+				id: 1,
+				name: 'test',
+				value: 507.65
+			};
+
+			var trasfromed = siren.transform(source, "0.0.1", "/api");
+			expect(trasfromed.actions()[0].method).toBe("POST");
+			expect(trasfromed.actions()[0].title).toBe("POST action");
+			expect(trasfromed.actions()[0].name).toBe("post");
+			expect(trasfromed.actions()[0].href).toBe("/api");
+		}));
+
+		it('POST action invocation', inject(function ($rootScope) {
+
+			var source = {
+				id: 1,
+				name: 'test',
+				value: 507.65
+			};
+			
+			$httpBackend.when('POST', '/api', {orderNumber:1, productCode:"IER", quantity:5}).respond({
+					"properties": { 
+						"Id": 56
+					}			
+			});
+			
+			var trasfromed = siren.transform(source, "0.0.1", "/api");
+
+			var promice = trasfromed.action("post", {orderNumber:1, productCode:"IER", quantity:5});
+			
+			var orderData;
+			promice.then(function(data) {
+				orderData = data;
+			})
+			.catch(function(data) {
+				console.log(data);
+			});
+
+			$rootScope.$apply();
+			$httpBackend.flush();
+
+			expect(orderData.Id).toBe(56);
+		}));
+
+		it('PUT action invocation', inject(function ($rootScope) {
+
+			var source = {
+				id: 1,
+				name: 'test',
+				value: 507.65
+			};
+			
+			$httpBackend.when('PUT', '/api/17', {orderNumber:17, productCode:"IER", quantity:5}).respond({
+					"properties": { 
+						"Id": 56
+					}			
+			});
+			
+			var trasfromed = siren.transform(source, "0.0.1", "/api");
+
+			var promice = trasfromed.action("put", {orderNumber:17, productCode:"IER", quantity:5, __urlTransformer:function(url) {return url + '/' + this.orderNumber;} });
+			
+			var orderData;
+			promice.then(function(data) {
+				orderData = data;
+			})
+			.catch(function(data) {
+				console.log(data);
+			});
+
+			$rootScope.$apply();
+			$httpBackend.flush();
+
+			expect(orderData.Id).toBe(56);
+		}));
+
+		it('DELETE action invocation', inject(function ($rootScope) {
+
+			var source = {
+				id: 1,
+				name: 'test',
+				value: 507.65
+			};
+			
+			$httpBackend.when('DELETE', '/api/17').respond({
+					"properties": { 
+						"Id": 56
+					}			
+			});
+			
+			var trasfromed = siren.transform(source, "0.0.1", "/api");
+
+			var promice = trasfromed.action("delete", {__urlTransformer:function(url) {return url + '/17';} });
+			
+			var orderData;
+			promice.then(function(data) {
+				orderData = data;
+			})
+			.catch(function(data) {
+				console.log(data);
+			});
+
+			$rootScope.$apply();
+			$httpBackend.flush();
+
+			expect(orderData.Id).toBe(56);
 		}));
 	});
 	

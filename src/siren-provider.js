@@ -174,6 +174,35 @@ angular.module("angularHypermedia")
 		};
 	}
 
+	function AddSyntheticActions(siren, baseUrl) {
+		siren.actions = [];
+		siren.actions.push({
+			name: "post",
+			title: "POST action",
+			method: "POST",
+			href: baseUrl
+		});
+		siren.actions.push({
+			name: "put",
+			title: "PUT action",
+			method: "PUT",
+			href: baseUrl
+		});
+		siren.actions.push({
+			name: "path",
+			title: "PATCH action",
+			method: "PATCH",
+			href: baseUrl
+		});
+		siren.actions.push({
+			name: "delete",
+			title: "DELETE action",
+			method: "DELETE",
+			href: baseUrl
+		});
+		
+	}
+
 	return {
 		GetLinkUrlByRelVersion: GetLinkUrlByRelVersion,
 		CreateEntities: CreateEntities,
@@ -181,21 +210,34 @@ angular.module("angularHypermedia")
 		ValidateActionData : ValidateActionData,
 		SubstituteQueryParameters : SubstituteQueryParameters,
 		SimulateHTTPErrorFromException : SimulateHTTPErrorFromException,
+		AddSyntheticActions : AddSyntheticActions,
 
-		transform: function t (data, protocolVersion) {
-			var ctor = function (data, protocolVersion) {
+		transform: function t (data, protocolVersion, baseUrl) {
+			var ctor = function (data, protocolVersion, baseUrl) {
+
+				var isSiren = angular.isObject(data.properties) || angular.isArray(data.links) || angular.isArray(data.actions); 
+				
+				if (isSiren) {
+					angular.extend(this, data.properties);
+					CreateEntities(data.entities, this, t, protocolVersion);
+				} else {
+					angular.extend(this, data);
+					AddSyntheticActions(data, baseUrl);
+				}
+
 				this.link = function(relName, version)
 				{
 					var defer = q.defer();
 					try {
-						var urlVer = version || protocolVersion;
-						var url = GetLinkUrlByRelVersion(data.links, relName, urlVer);
+						var urlVer = version || protocolVersion,
+							url = GetLinkUrlByRelVersion(data.links, relName, urlVer);
+
 						if (!url)
 							throw {status: 404, message: "Rel " + relName + "/" + urlVer + " not found."};
 
 						http({method: 'GET', url: url, headers: sirenConfig.headers})
 							.success(function(data, status, headers, config) {
-						    	defer.resolve(t(data, protocolVersion));
+						    	defer.resolve(t(data, protocolVersion, url));
 						    })
 						    .error(function(data, status, headers, config) {
 						    	defer.reject({data: data, status: status, headers:headers, config: config});
@@ -240,13 +282,16 @@ angular.module("angularHypermedia")
 						} else { 
 							config.data = actionData;
 						}
+						
+						if (typeof actionData.__urlTransformer === "function")
+							config.url = actionData.__urlTransformer(config.url, actionData, action);
 
 						http(config)
-							.success(function(data, status, headers, config) {
-						    	defer.resolve(t(data, protocolVersion));
+							.success(function(data, status, headers, cfg) {
+						    	defer.resolve(t(data, protocolVersion, config.url));
 						    })
-						    .error(function(data, status, headers, config) {
-						    	defer.reject({data: data, status: status, headers:headers, config: config});
+						    .error(function(data, status, headers, cfg) {
+						    	defer.reject({data: data, status: status, headers:headers, config: cfg});
 						    });
 					}
 					catch(err) {
@@ -254,24 +299,15 @@ angular.module("angularHypermedia")
 					}
 					return defer.promise;
 				}
-
-				var isSiren = angular.isObject(data.properties) || angular.isArray(data.links) || angular.isArray(data.actions); 
-				
-				if (isSiren) {
-					angular.extend(this, data.properties);
-					CreateEntities(data.entities, this, t, protocolVersion);
-				} else {
-					angular.extend(this, data);
-				}
 			}
 			
 
 			if (!angular.isArray(data))
-				return new ctor(data, protocolVersion);
+				return new ctor(data, protocolVersion, baseUrl);
 
 			var result = [];
 			for(var el in data)
-				result.push(new ctor(data[el], protocolVersion));
+				result.push(new ctor(data[el], protocolVersion, baseUrl));
 			return result;
 		}
 	};
