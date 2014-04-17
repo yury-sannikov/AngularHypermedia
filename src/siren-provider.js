@@ -213,7 +213,9 @@ angular.module("angularHypermedia")
 		AddSyntheticActions : AddSyntheticActions,
 
 		transform: function t (data, protocolVersion, baseUrl) {
-			var ctor = function (data, protocolVersion, baseUrl) {
+			var ctor = function (payload, protocolVersion, baseUrl) {
+
+				var data = angular.copy(payload);
 
 				var isSiren = angular.isObject(data.properties) || angular.isArray(data.links) || angular.isArray(data.actions); 
 				
@@ -225,7 +227,13 @@ angular.module("angularHypermedia")
 					AddSyntheticActions(data, baseUrl);
 				}
 
-				this.link = function(relName, version)
+				var defFunc = function(obj, name, func) {
+					if (typeof obj[name] != 'undefined')
+						obj["_" + name] = obj[name];
+					obj[name] = func;
+				}
+
+				defFunc(this, "link", function(relName, version)
 				{
 					var defer = q.defer();
 					try {
@@ -247,19 +255,19 @@ angular.module("angularHypermedia")
 						defer.reject(SimulateHTTPErrorFromException(err));	
 					}
 					return defer.promise;
-				}
+				});
 				
-				this.links =function()
+				defFunc(this, "links", function()
 				{
 					return data.links || [];					
-				}
+				});
 
-				this.actions = function()
+				defFunc(this, "actions", function()
 				{
 					return data.actions || [];
-				}
+				});
 
-				this.action = function(actionName, actionData)
+				defFunc(this, "action", function(actionName, actionData)
 				{
 					var defer = q.defer();
 					try {
@@ -298,7 +306,7 @@ angular.module("angularHypermedia")
 						defer.reject(SimulateHTTPErrorFromException(err));	
 					}
 					return defer.promise;
-				}
+				});
 			}
 			
 

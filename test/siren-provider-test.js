@@ -46,7 +46,9 @@ describe("Siren provider", function () {
 				"properties": { 
 					"orderNumber": 42, 
 					"itemCount": 3,
-					"status": "pending"
+					"status": "pending",
+					"link": "/api",
+					"links": []
 				},
 				"entities": [
 					{ 
@@ -234,7 +236,13 @@ describe("Siren provider", function () {
 		expect(shippingData.city).toBe("New York");
 		expect(shippingData.zip).toBe(12345);
 	}));
-	
+  	
+  	it('properties name overlap', inject(function ($rootScope) {
+		var trasfromed = siren.transform(sirenResponse, "0.0.1");
+		expect("_link" in trasfromed).toBe(true);
+		expect("_links" in trasfromed).toBe(true);
+	}));
+
 	it('get links', inject(function ($rootScope) {
 		expect(typeof siren.transform).toBe("function");
 
@@ -436,6 +444,30 @@ describe("Siren provider", function () {
 			expect(trasfromed.id).toBe(source.id);
 			expect(trasfromed.name).toBe(source.name);
 			expect(trasfromed.value).toBe(source.value);
+		}));
+
+		it('transform function with overlap', inject(function ($rootScope) {
+
+			var source = {
+				id: 1,
+				name: 'test',
+				value: 507.65,
+				link: 1,
+				links: 'none',
+				action: 2,
+				actions: 'test'
+			};
+
+			console.log('---');
+			var trasfromed = siren.transform(source, "0.0.1");
+			console.log('---');
+			expect(trasfromed.id).toBe(source.id);
+			expect(trasfromed.name).toBe(source.name);
+			expect(trasfromed.value).toBe(source.value);
+			expect(trasfromed._link).toBe(source.link);
+			expect(trasfromed._links).toBe(source.links);
+			expect(trasfromed._action).toBe(source.action);
+			expect(trasfromed._actions).toBe(source.actions);
 		}));
 
 		it('transform function actions', inject(function ($rootScope) {
