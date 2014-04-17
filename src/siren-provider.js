@@ -2,7 +2,7 @@
 
 
 angular.module("angularHypermedia")
-.service("Siren",  ["$q", "$http", function (q, http) {	
+.service("Siren",  ["$q", "$http", "Mediamapper", function (q, http, Mediamapper) {	
 
 	var sirenConfig = {
  		headers: {
@@ -44,13 +44,13 @@ angular.module("angularHypermedia")
 			var defer = q.defer();
 			if (entity.properties) {
 				// This is full entity so resolve it now
-				defer.resolve(transformerFunction(entity, protocolVersion));
+				defer.resolve(transformerFunction(entity, protocolVersion, '', function() {return sirenConfig.headers.accept;}));
 				return defer.promise;
 			}
 
 			http({method: 'GET', url: entity.href, headers: sirenConfig.headers})
 				.success(function (data, status, headers, config) {
-			    	defer.resolve(transformerFunction(data, protocolVersion));
+			    	defer.resolve(transformerFunction(data, protocolVersion, entity.href, headers));
 			    })
 			    .error(function(data, status, headers, config) {
 			    	defer.reject({data: data, status: status, headers:headers, config: config});
@@ -174,35 +174,6 @@ angular.module("angularHypermedia")
 		};
 	}
 
-	function AddSyntheticActions(siren, baseUrl) {
-		siren.actions = [];
-		siren.actions.push({
-			name: "post",
-			title: "POST action",
-			method: "POST",
-			href: baseUrl
-		});
-		siren.actions.push({
-			name: "put",
-			title: "PUT action",
-			method: "PUT",
-			href: baseUrl
-		});
-		siren.actions.push({
-			name: "path",
-			title: "PATCH action",
-			method: "PATCH",
-			href: baseUrl
-		});
-		siren.actions.push({
-			name: "delete",
-			title: "DELETE action",
-			method: "DELETE",
-			href: baseUrl
-		});
-		
-	}
-
 	return {
 		GetLinkUrlByRelVersion: GetLinkUrlByRelVersion,
 		CreateEntities: CreateEntities,
@@ -210,30 +181,14 @@ angular.module("angularHypermedia")
 		ValidateActionData : ValidateActionData,
 		SubstituteQueryParameters : SubstituteQueryParameters,
 		SimulateHTTPErrorFromException : SimulateHTTPErrorFromException,
-		AddSyntheticActions : AddSyntheticActions,
 
-		transform: function t (data, protocolVersion, baseUrl) {
-			var ctor = function (payload, protocolVersion, baseUrl) {
+		transform: function t (data, protocolVersion, baseUrl, headers) {
+			var ctor = function (data, protocolVersion) {
 
-				var data = angular.copy(payload);
+				angular.extend(this, data.properties);
+				CreateEntities(data.entities, this, t, protocolVersion);
 
-				var isSiren = angular.isObject(data.properties) || angular.isArray(data.links) || angular.isArray(data.actions); 
-				
-				if (isSiren) {
-					angular.extend(this, data.properties);
-					CreateEntities(data.entities, this, t, protocolVersion);
-				} else {
-					angular.extend(this, data);
-					AddSyntheticActions(data, baseUrl);
-				}
-
-				var defFunc = function(obj, name, func) {
-					if (typeof obj[name] != 'undefined')
-						obj["_" + name] = obj[name];
-					obj[name] = func;
-				}
-
-				defFunc(this, "link", function(relName, version)
+				this.link = function(relName, version)
 				{
 					var defer = q.defer();
 					try {
@@ -245,7 +200,7 @@ angular.module("angularHypermedia")
 
 						http({method: 'GET', url: url, headers: sirenConfig.headers})
 							.success(function(data, status, headers, config) {
-						    	defer.resolve(t(data, protocolVersion, url));
+						    	defer.resolve(t(data, protocolVersion, url, headers));
 						    })
 						    .error(function(data, status, headers, config) {
 						    	defer.reject({data: data, status: status, headers:headers, config: config});
@@ -255,19 +210,19 @@ angular.module("angularHypermedia")
 						defer.reject(SimulateHTTPErrorFromException(err));	
 					}
 					return defer.promise;
-				});
+				}
 				
-				defFunc(this, "links", function()
+				this.links = function()
 				{
 					return data.links || [];					
-				});
+				}
 
-				defFunc(this, "actions", function()
+				this.actions = function()
 				{
 					return data.actions || [];
-				});
+				}
 
-				defFunc(this, "action", function(actionName, actionData)
+				this.action = function(actionName, actionData)
 				{
 					var defer = q.defer();
 					try {
@@ -296,7 +251,7 @@ angular.module("angularHypermedia")
 
 						http(config)
 							.success(function(data, status, headers, cfg) {
-						    	defer.resolve(t(data, protocolVersion, config.url));
+						    	defer.resolve(t(data, protocolVersion, config.url, headers));
 						    })
 						    .error(function(data, status, headers, cfg) {
 						    	defer.reject({data: data, status: status, headers:headers, config: cfg});
@@ -306,16 +261,17 @@ angular.module("angularHypermedia")
 						defer.reject(SimulateHTTPErrorFromException(err));	
 					}
 					return defer.promise;
-				});
+				}
 			}
 			
+			var mapperFn = Mediamapper.get(headers) || angular.identity;
 
 			if (!angular.isArray(data))
-				return new ctor(data, protocolVersion, baseUrl);
+				return new ctor(mapperFn(data, baseUrl), protocolVersion, baseUrl);
 
 			var result = [];
 			for(var el in data)
-				result.push(new ctor(data[el], protocolVersion, baseUrl));
+				result.push(new ctor(mapperFn(data[el], baseUrl), protocolVersion, baseUrl));
 			return result;
 		}
 	};

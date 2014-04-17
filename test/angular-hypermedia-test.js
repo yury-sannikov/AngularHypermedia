@@ -75,7 +75,7 @@ describe("Angular Hypermedia provider, API root as object", function () {
    });
 
     it('resolve link', inject(function ($rootScope) {
-    	$httpBackend.when('GET','http://localhost:55556/api/benefits/mybenefits').respond(apiRootObject);
+    	$httpBackend.when('GET','http://localhost:55556/api/benefits/mybenefits').respond(apiRootObject, {"content-type":"application/vnd.siren+json"});
 		
 		var linkResult = hypermedia.getLink("benefits/mybenefits");
 		expect(typeof linkResult).toBe("object");
@@ -140,7 +140,7 @@ describe("Angular Hypermedia provider, support links instead of rels", function 
    });
 
     it('resolve link as full URL', inject(function ($rootScope) {
-    	$httpBackend.when('GET','http://localhost:55556/api/benefits/mybenefits').respond(apiRootObject);
+    	$httpBackend.when('GET','http://localhost:55556/api/benefits/mybenefits').respond(apiRootObject, {"content-type":"application/vnd.siren+json"});
 		
 		var linkResult = hypermedia.getLink("http://localhost:55556/api/benefits/mybenefits");
 
@@ -162,7 +162,7 @@ describe("Angular Hypermedia provider, support links instead of rels", function 
 	}));
 
     it('resolve link as partial URL', inject(function ($rootScope) {
-    	$httpBackend.when('GET','/api/benefits/mybenefits').respond(apiRootObject);
+    	$httpBackend.when('GET','/api/benefits/mybenefits').respond(apiRootObject, {"content-type":"application/vnd.siren+json"});
 		
 		var linkResult = hypermedia.getLink("/api/benefits/mybenefits");
 

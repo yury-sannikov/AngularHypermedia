@@ -199,7 +199,7 @@ describe("Siren provider", function () {
 				"properties": { 
 					"parentOrderId": 54
 				}			
-		});
+		}, {"content-type":"application/vnd.siren+json"});
 
 		expect(typeof result.orderItems.then).toBe("function");
 
@@ -238,7 +238,7 @@ describe("Siren provider", function () {
 	}));
   	
   	it('properties name overlap', inject(function ($rootScope) {
-		var trasfromed = siren.transform(sirenResponse, "0.0.1");
+		var trasfromed = siren.transform(sirenResponse, "0.0.1", "/", function() {return "application/vnd.siren+json";});
 		expect("_link" in trasfromed).toBe(true);
 		expect("_links" in trasfromed).toBe(true);
 	}));
@@ -374,7 +374,7 @@ describe("Siren provider", function () {
 					"properties": { 
 						"Id": 1
 					}			
-			});
+			}, {"content-type" : "application/vnd.siren+json"});
 
 			var promice = trasfromed.action("search-item", {orderNumber:1, productCode:"IER", quantity:5});
 			
@@ -415,7 +415,7 @@ describe("Siren provider", function () {
 					"properties": { 
 						"Id": 2
 					}			
-			});
+			}, {"content-type" : "application/vnd.siren+json"});
 
 			var promice = trasfromed.action("create-item", {orderNumber:10, productCode:"ASF", quantity:1});
 			
@@ -440,7 +440,7 @@ describe("Siren provider", function () {
 				value: 507.65
 			};
 
-			var trasfromed = siren.transform(source, "0.0.1");
+			var trasfromed = siren.transform(source, "0.0.1", "/", function() {return "application/json";});
 			expect(trasfromed.id).toBe(source.id);
 			expect(trasfromed.name).toBe(source.name);
 			expect(trasfromed.value).toBe(source.value);
@@ -458,9 +458,7 @@ describe("Siren provider", function () {
 				actions: 'test'
 			};
 
-			console.log('---');
-			var trasfromed = siren.transform(source, "0.0.1");
-			console.log('---');
+			var trasfromed = siren.transform(source, "0.0.1", "/", function() {return "application/json";});
 			expect(trasfromed.id).toBe(source.id);
 			expect(trasfromed.name).toBe(source.name);
 			expect(trasfromed.value).toBe(source.value);
@@ -478,7 +476,7 @@ describe("Siren provider", function () {
 				value: 507.65
 			};
 
-			var trasfromed = siren.transform(source, "0.0.1", "/api");
+			var trasfromed = siren.transform(source, "0.0.1", "/api", function() {return "application/json";});
 			expect(trasfromed.actions()[0].method).toBe("POST");
 			expect(trasfromed.actions()[0].title).toBe("POST action");
 			expect(trasfromed.actions()[0].name).toBe("post");
@@ -497,9 +495,9 @@ describe("Siren provider", function () {
 					"properties": { 
 						"Id": 56
 					}			
-			});
+			}, {"content-type" : "application/vnd.siren+json"});
 			
-			var trasfromed = siren.transform(source, "0.0.1", "/api");
+			var trasfromed = siren.transform(source, "0.0.1", "/api", function() {return "application/json";});
 
 			var promice = trasfromed.action("post", {orderNumber:1, productCode:"IER", quantity:5});
 			
@@ -529,9 +527,9 @@ describe("Siren provider", function () {
 					"properties": { 
 						"Id": 56
 					}			
-			});
+			}, {"content-type" : "application/vnd.siren+json"});
 			
-			var trasfromed = siren.transform(source, "0.0.1", "/api");
+			var trasfromed = siren.transform(source, "0.0.1", "/api", function() {return "application/json";});
 
 			var promice = trasfromed.action("put", {orderNumber:17, productCode:"IER", quantity:5, __urlTransformer:function(url) {return url + '/' + this.orderNumber;} });
 			
@@ -547,6 +545,7 @@ describe("Siren provider", function () {
 			$httpBackend.flush();
 
 			expect(orderData.Id).toBe(56);
+
 		}));
 
 		it('DELETE action invocation', inject(function ($rootScope) {
@@ -561,9 +560,9 @@ describe("Siren provider", function () {
 					"properties": { 
 						"Id": 56
 					}			
-			});
+			}, {"content-type" : "application/vnd.siren+json"});
 			
-			var trasfromed = siren.transform(source, "0.0.1", "/api");
+			var trasfromed = siren.transform(source, "0.0.1", "/api", function() {return "application/json";});
 
 			var promice = trasfromed.action("delete", {__urlTransformer:function(url) {return url + '/17';} });
 			
