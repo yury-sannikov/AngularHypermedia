@@ -241,6 +241,7 @@ describe("Siren provider", function () {
 		var trasfromed = siren.transform(sirenResponse, "0.0.1", "/", function() {return "application/vnd.siren+json";});
 		expect("_link" in trasfromed).toBe(true);
 		expect("_links" in trasfromed).toBe(true);
+		expect(typeof trasfromed.properties).toBe("undefined");
 	}));
 
 	it('get links', inject(function ($rootScope) {
@@ -444,6 +445,7 @@ describe("Siren provider", function () {
 			expect(trasfromed.id).toBe(source.id);
 			expect(trasfromed.name).toBe(source.name);
 			expect(trasfromed.value).toBe(source.value);
+			expect(typeof trasfromed.properties).toBe("undefined");
 		}));
 
 		it('transform function with overlap', inject(function ($rootScope) {

@@ -3,11 +3,11 @@
 angular.module("angularHypermedia")
 .service("Mediamapper",  ["$q", "$http", function (q, http) {	
 
-	function PlainJsonMapper(payload, baseUrl) {
+	function PlainJsonMapper(data, baseUrl) {
 		
-		payload = angular.copy(payload);
+		var payload = {};
 		
-		payload.properties = ResolveConflicts(payload);
+		payload.properties = ResolveConflicts(angular.copy(data));
 
 		payload.actions = [];
 		payload.links = [];
