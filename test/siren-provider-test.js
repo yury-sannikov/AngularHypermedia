@@ -7,15 +7,17 @@ describe("Siren provider", function () {
 	var $injector;
 	var $httpBackend;
 	var sirenArrayResponse;
+	var mediaMapper;
 
 	beforeEach(function () {
 		module('angularHypermedia');
 
-		inject(function (_Siren_, _$injector_, _$httpBackend_) 
+		inject(function (_Siren_, _$injector_, _$httpBackend_, Mediamapper) 
 			{
 				siren = _Siren_; 
 				$injector = _$injector_;
 				$httpBackend =_$httpBackend_;
+				mediaMapper = Mediamapper;
 			});
 		
 		apiRootData = {
@@ -389,6 +391,57 @@ describe("Siren provider", function () {
 
 			expect(orderData.Id).toBe(1);
 		}));
+
+		it('get with 404', inject(function ($rootScope) {
+
+			var source = {
+				actions: [
+					{
+						"name": "search-item",
+						"title": "Search Item",
+						"method": "GET",
+						"href": "http://api.x.io/orders?orderNumber=:orderNumber&productCode=:productCode&quantity=:quantity",
+						"type": "application/x-www-form-urlencoded",
+						"fields": [
+							{ "name": "orderNumber", "type": "hidden", "value": "42" },
+							{ "name": "productCode", "type": "text" },
+							{ "name": "quantity", "type": "number" }
+						]						
+					}
+				]
+			};
+
+			var trasfromed = siren.transform(source, "0.0.1");
+
+
+			$httpBackend.when('GET','http://api.x.io/orders?orderNumber=1&productCode=IER&quantity=5').respond(404, {
+					detail: "Not found"
+				}, 
+				{
+					"content-type" : "application/problem+json"
+				}
+			);
+
+			var promice = trasfromed.action("search-item", {orderNumber:1, productCode:"IER", quantity:5});
+			
+			var orderData = null, error;
+			
+			promice
+			.then(function(data) {
+				orderData = data;
+			})
+			.catch(function(err) {
+				error = err;
+			});
+
+			$rootScope.$apply();
+			$httpBackend.flush();
+
+			expect(orderData).toBe(null);
+			expect(error).not.toBe(null);
+			expect(error).toEqual({ type : 'about:blank', status : 404, detail: "Not found" });
+
+		}));
 		
 		it('non get', inject(function ($rootScope) {
 
@@ -586,29 +639,29 @@ describe("Siren provider", function () {
 	describe("error handling", function () {
 		it('convert exception to HTTP error', inject(function ($rootScope) {
 
-			var err = siren.SimulateHTTPErrorFromException();
-			expect(err).toEqual({data:{Message:"An error occurred"}, status:500, headers: angular.noop, config: {}});
+			var err = mediaMapper.problemJsonFromObject();
+			expect(err).toEqual({status:500, type: "about:blank"});
 
-			err = siren.SimulateHTTPErrorFromException(405);
-			expect(err).toEqual({data:{Message:"An error occurred"}, status:405, headers: angular.noop, config: {}});
+			err = mediaMapper.problemJsonFromObject(405);
+			expect(err).toEqual({status:405, type: "about:blank"});
 
-			err = siren.SimulateHTTPErrorFromException("shit happens");
-			expect(err).toEqual({data:{Message:"shit happens"}, status:500, headers: angular.noop, config: {}});
+			err = mediaMapper.problemJsonFromObject("shit happens");
+			expect(err).toEqual({title:"shit happens", status:500, type: "about:blank"});
 
-			err = siren.SimulateHTTPErrorFromException({message: "shit happens"});
-			expect(err).toEqual({data:{Message:"shit happens"}, status:500, headers: angular.noop, config: {}});
+			err = mediaMapper.problemJsonFromObject({title: "shit happens"});
+			expect(err).toEqual({title:"shit happens", status:500, type: "about:blank"});
 
-			err = siren.SimulateHTTPErrorFromException({message: "shit happens", status: 502});
-			expect(err).toEqual({data:{Message:"shit happens"}, status:502, headers: angular.noop, config: {}});
+			err = mediaMapper.problemJsonFromObject({title: "shit happens", status: 502});
+			expect(err).toEqual({title:"shit happens", status:502, type: "about:blank"});
 
-			err = siren.SimulateHTTPErrorFromException({status: 502});
-			expect(err).toEqual({data:{Message:"An error occurred"}, status:502, headers: angular.noop, config: {}});
+			err = mediaMapper.problemJsonFromObject({status: 502});
+			expect(err).toEqual({status:502, type: "about:blank"});
 
-			var err = siren.SimulateHTTPErrorFromException({});
-			expect(err).toEqual({data:{Message:"An error occurred"}, status:500, headers: angular.noop, config: {}});
+			var err = mediaMapper.problemJsonFromObject({});
+			expect(err).toEqual({status:500, type: "about:blank"});
 
-			var err = siren.SimulateHTTPErrorFromException([]);
-			expect(err).toEqual({data:{Message:"An error occurred"}, status:500, headers: angular.noop, config: {}});
+			var err = mediaMapper.problemJsonFromObject([]);
+			expect(err).toEqual({status:500, type: "about:blank"});
 		}));
 
 		it('no link error', inject(function ($rootScope) {
@@ -620,7 +673,7 @@ describe("Siren provider", function () {
 			link.catch(function(err) {result = err;});
 			$rootScope.$apply();
 
-			expect(result).toEqual({data:{Message: 'Rel no-rel-found/0.0.1 not found.'}, status: 404, headers: angular.noop, config: {}});
+			expect(result).toEqual({detail: 'Rel no-rel-found/0.0.1 not found.', status: 404, type: "about:blank", title: "Not Found"});
 		}));
 
 		it('no action error', inject(function ($rootScope) {
@@ -632,7 +685,7 @@ describe("Siren provider", function () {
 			link.catch(function(err) {result = err;});
 			$rootScope.$apply();
 
-			expect(result).toEqual({data:{Message: "Action 'nonexistent-action' forbidden."}, status: 403, headers: angular.noop, config: {}});
+			expect(result).toEqual({detail: "Action 'nonexistent-action' forbidden.", status: 403, type: "about:blank", title: "Forbidden"});
 		}));
 
 		it('action invalid parameters error', inject(function ($rootScope) {
@@ -644,13 +697,13 @@ describe("Siren provider", function () {
 			link.catch(function(err) {result = err;});
 			$rootScope.$apply();
 
-			expect(result).toEqual({data:{Message: "Bad request 'add-item'. Message: Data should be supplied"}, status: 400, headers: angular.noop, config: {}});
+			expect(result).toEqual({detail: "Bad request 'add-item'. Message: Data should be supplied", status: 400, type: "about:blank", title: "Bad Request"});
 
 			link = transformed.action("add-item", {id: 1});
 			link.catch(function(err) {result = err;});
 			$rootScope.$apply();
 
-			expect(result).toEqual({data:{Message: "Bad request 'add-item'. Message: Supplied data doesn't contain field 'orderNumber'"}, status: 400, headers: angular.noop, config: {}});
+			expect(result).toEqual({detail: "Bad request 'add-item'. Message: Supplied data doesn't contain field 'orderNumber'", status: 400, type: "about:blank", title: "Bad Request"});
 		}));
 
 	});

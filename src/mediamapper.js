@@ -81,6 +81,22 @@ angular.module("angularHypermedia")
 		}
 	];
 
+	var problemJsonFromObject = function (err) {
+		
+		var result = {
+			type: "about:blank",
+			status: angular.isNumber(err) ? err : 500
+		};
+
+		if (angular.isString(err)) {
+			result.title = err;
+		} else if (angular.isObject(err)) {
+			angular.extend(result, err);
+		}
+
+		return result;
+	};
+
 	return {
 		get : function(headersFn){
 			if (typeof headersFn != 'function')
@@ -98,6 +114,16 @@ angular.module("angularHypermedia")
 			}
 
 			return angular.noop;
+		},
+		
+		problemJsonFromObject : problemJsonFromObject,
+
+		problemJson : function(data, status, headers, config){
+			var result = problemJsonFromObject(data);
+			if (status)
+				result.status = status;
+			return result;
 		}
+
 	};
 }]);

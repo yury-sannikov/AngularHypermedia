@@ -6,7 +6,7 @@ angular.module("angularHypermedia")
 
 	var sirenConfig = {
  		headers: {
- 			accept:"application/vnd.siren+json"
+ 			accept:"application/vnd.siren+json,application/problem+json,application/json"
  		}
 	};
 
@@ -53,7 +53,7 @@ angular.module("angularHypermedia")
 			    	defer.resolve(transformerFunction(data, protocolVersion, entity.href, headers));
 			    })
 			    .error(function(data, status, headers, config) {
-			    	defer.reject({data: data, status: status, headers:headers, config: config});
+			    	defer.reject(Mediamapper.problemJson(data, status, headers, config));
 			    });						
 
 			return defer.promise;
@@ -152,35 +152,12 @@ angular.module("angularHypermedia")
 		return url;
 	}
 
-	function SimulateHTTPErrorFromException(err) {
-		
-		var message = "An error occurred", 
-			status = angular.isNumber(err) ? err : 500;
-		
-		if (angular.isString(err)) {
-			message = err;
-		} else if (angular.isObject(err)) {
-			message = err.message || message;
-			status = err.status || status; 
-		}
-
-		return {
-			data: { 
-				Message: message
-			}, 
-			status: status, 
-			headers: angular.noop, 
-			config: {}
-		};
-	}
-
 	return {
 		GetLinkUrlByRelVersion: GetLinkUrlByRelVersion,
 		CreateEntities: CreateEntities,
 		GetActionByName : GetActionByName,
 		ValidateActionData : ValidateActionData,
 		SubstituteQueryParameters : SubstituteQueryParameters,
-		SimulateHTTPErrorFromException : SimulateHTTPErrorFromException,
 
 		transform: function t (data, protocolVersion, baseUrl, headers) {
 			var ctor = function (data, protocolVersion) {
@@ -196,18 +173,18 @@ angular.module("angularHypermedia")
 							url = GetLinkUrlByRelVersion(data.links, relName, urlVer);
 
 						if (!url)
-							throw {status: 404, message: "Rel " + relName + "/" + urlVer + " not found."};
+							throw Mediamapper.problemJsonFromObject({title: "Not Found", status: 404, detail: "Rel " + relName + "/" + urlVer + " not found."});
 
 						http({method: 'GET', url: url, headers: sirenConfig.headers})
 							.success(function(data, status, headers, config) {
 						    	defer.resolve(t(data, protocolVersion, url, headers));
 						    })
 						    .error(function(data, status, headers, config) {
-						    	defer.reject({data: data, status: status, headers:headers, config: config});
+						    	defer.reject(Mediamapper.problemJson(data, status, headers, config));
 						    });
 					}
 					catch(err) {
-						defer.reject(SimulateHTTPErrorFromException(err));	
+						defer.reject(Mediamapper.problemJsonFromObject(err));	
 					}
 					return defer.promise;
 				}
@@ -229,12 +206,12 @@ angular.module("angularHypermedia")
 						var action = GetActionByName(data.actions, actionName);
 						
 						if (!action)
-							throw {status: 403, message: "Action '" + actionName + "' forbidden."};
+							throw Mediamapper.problemJsonFromObject({title: "Forbidden", status: 403, detail: "Action '" + actionName + "' forbidden."});
 
 						var validate = ValidateActionData(action, actionData);
 						
 						if (!!validate)
-							throw {status: 400, message: "Bad request '" + actionName + "'. Message: " + validate};
+							throw Mediamapper.problemJsonFromObject({title: "Bad Request", status: 400, detail: "Bad request '" + actionName + "'. Message: " + validate});
 
 						var method = (action.method || 'GET').toUpperCase();
 						
@@ -254,11 +231,11 @@ angular.module("angularHypermedia")
 						    	defer.resolve(t(data, protocolVersion, config.url, headers));
 						    })
 						    .error(function(data, status, headers, cfg) {
-						    	defer.reject({data: data, status: status, headers:headers, config: cfg});
+						    	defer.reject(Mediamapper.problemJson(data, status, headers, cfg));
 						    });
 					}
 					catch(err) {
-						defer.reject(SimulateHTTPErrorFromException(err));	
+						defer.reject(Mediamapper.problemJsonFromObject(err));	
 					}
 					return defer.promise;
 				}

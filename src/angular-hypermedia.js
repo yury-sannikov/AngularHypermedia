@@ -22,7 +22,7 @@ angular.module("angularHypermedia", [])
 
 	this.setUp = setUp;
 	this.getConfig = getConfig;
-	this.$get = ["$q", "$http", config.hypermediaFormat, function(q, http, transformerSvc) {
+	this.$get = ["$q", "$http", config.hypermediaFormat, "Mediamapper", function(q, http, transformerSvc, Mediamapper) {
 
 	
 		var GetApiRoot = function() {
@@ -37,13 +37,13 @@ angular.module("angularHypermedia", [])
 				return defer.promise;
 			}
 
-			http({method: 'GET', url: config.apiRoot, headers: {accept:"application/vnd.siren+json"}})
+			http({method: 'GET', url: config.apiRoot, headers: {accept:"application/vnd.siren+json,application/problem+json,application/json"}})
 				.success(function(data, status, headers, cfg) {
 			    	apiRootObjectHolder.data = transformerSvc.transform(data, config.currentVersion, config.apiRoot);
 			    	defer.resolve(apiRootObjectHolder.data);
 			    })
 			    .error(function(data, status, headers, cfg) {
-			    	defer.reject({data: data, status: status, headers: headers, config: cfg});
+			    	defer.reject(Mediamapper.problemJson(data, status, headers, cfg));
 			    });
 			
 			return defer.promise;
